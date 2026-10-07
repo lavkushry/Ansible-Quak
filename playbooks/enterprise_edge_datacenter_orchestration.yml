@@ -1,0 +1,200 @@
+---
+# Playbook: enterprise_edge_datacenter_orchestration.yml
+# Purpose: Enterprise orchestration combining Jira (ITSM), F5 BIG-IP (ADC),
+#          Zscaler (Security), and Akamai (Edge CDN) in a resilient workflow.
+# Execution: ansible-playbook playbooks/enterprise_edge_datacenter_orchestration.yml
+
+- name: Enterprise Change Window Orchestration
+  hosts: localhost
+  gather_facts: false
+  vars:
+    change_project: "OPS"
+    app_service_name: "customer-portal"
+    app_vip_ip: "10.100.20.50"
+    pool_member_target: "10.100.20.11:8080"
+    akamai_network: "staging"  # staging or production
+
+  vars_files:
+    - "{{ playbook_dir }}/../inventories/dev/group_vars/all.yml"
+
+  tasks:
+    - name: Run Orchestrated Change with Automatic Rollback & Incident Logging
+      block:
+        # ====================================================================
+        # 1. Jira ITSM: Open Change Ticket
+        # ====================================================================
+        - name: Create Jira Change Ticket for Automated Maintenance
+          community.general.jira:
+            uri: "{{ vault_jira_url }}"
+            username: "{{ vault_jira_username }}"
+            password: "{{ vault_jira_token }}"
+            project: "{{ change_project }}"
+            issuetype: "Change Request"
+            summary: "[AUTOMATION] Scheduled Deployment for {{ app_service_name }}"
+            description: >
+              Initiated by Ansible Automation Platform / AWX.
+              Targets: F5 ADC, Akamai CDN, Zscaler Security Policy.
+            operation: create
+          register: jira_ticket_result
+          no_log: true
+          tags: ['jira', 'start']
+
+        - name: Record Jira Ticket Key
+          ansible.builtin.set_fact:
+            active_ticket_key: "{{ jira_ticket_result.meta.key }}"
+          tags: ['jira']
+
+        - name: Transition Jira Ticket to 'In Progress'
+          community.general.jira:
+            uri: "{{ vault_jira_url }}"
+            username: "{{ vault_jira_username }}"
+            password: "{{ vault_jira_token }}"
+            issue: "{{ active_ticket_key }}"
+            operation: transition
+            status: "In Progress"
+          no_log: true
+          tags: ['jira']
+
+        # ====================================================================
+        # 2. Zscaler: Update Cloud Security & Whitelist Policy
+        # ====================================================================
+        - name: Ensure Partner APIs are Whitelisted in ZIA URL Categories
+          zscaler.ziacloud.zia_url_categories:
+            provider:
+              username: "{{ vault_zia_username }}"
+              password: "{{ vault_zia_password }}"
+              api_key: "{{ vault_zia_api_key }}"
+              cloud: "{{ vault_zia_cloud }}"
+            configured_name: "Corporate_Approved_Microservices"
+            super_category: "USER_DEFINED"
+            urls:
+              - "api.payment-gateway.net"
+              - "auth.identity-provider.io"
+            state: present
+          no_log: true
+          tags: ['zscaler', 'zia']
+
+        - name: Activate Committed Changes in ZIA
+          zscaler.ziacloud.zia_activation:
+            provider:
+              username: "{{ vault_zia_username }}"
+              password: "{{ vault_zia_password }}"
+              api_key: "{{ vault_zia_api_key }}"
+              cloud: "{{ vault_zia_cloud }}"
+          no_log: true
+          tags: ['zscaler', 'activate']
+
+        # ====================================================================
+        # 3. F5 BIG-IP: Graceful Connection Drain on Target Pool Member
+        # ====================================================================
+        - name: Gracefully Drain F5 Pool Member for Maintenance
+          f5networks.f5_modules.bigip_pool_member:
+            provider: "{{ f5_provider }}"
+            pool: "app_http_pool"
+            partition: "Common"
+            name: "{{ pool_member_target }}"
+            state: "disabled"
+          tags: ['f5', 'drain']
+
+        - name: Log Drain Status to Jira
+          community.general.jira:
+            uri: "{{ vault_jira_url }}"
+            username: "{{ vault_jira_username }}"
+            password: "{{ vault_jira_token }}"
+            issue: "{{ active_ticket_key }}"
+            operation: comment
+            comment: "F5 Pool Member {{ pool_member_target }} is drained (disabled). Performing maintenance."
+          no_log: true
+          tags: ['jira']
+
+        # ====================================================================
+        # 4. Simulated Maintenance / Deployment Step
+        # ====================================================================
+        - name: Pause for Maintenance Window
+          ansible.builtin.pause:
+            seconds: 3
+            prompt: "Simulating maintenance execution..."
+          tags: ['maintenance']
+
+        # ====================================================================
+        # 5. F5 BIG-IP: Re-enable Pool Member & Verify Health
+        # ====================================================================
+        - name: Re-enable F5 Pool Member Post-Maintenance
+          f5networks.f5_modules.bigip_pool_member:
+            provider: "{{ f5_provider }}"
+            pool: "app_http_pool"
+            partition: "Common"
+            name: "{{ pool_member_target }}"
+            state: "enabled"
+          tags: ['f5', 'enable']
+
+        # ====================================================================
+        # 6. Akamai EdgeGrid: Fast Purge Edge Cache
+        # ====================================================================
+        - name: Invalidate Stale Akamai Edge Cache for Updated Application
+          akamai.edgegrid.cache_purge:
+            hostname: "{{ vault_akamai_host }}"
+            client_token: "{{ vault_akamai_client_token }}"
+            client_secret: "{{ vault_akamai_client_secret }}"
+            access_token: "{{ vault_akamai_access_token }}"
+            network: "{{ akamai_network }}"
+            purge_type: "url"
+            action: "invalidate"
+            objects:
+              - "https://www.example.com/index.html"
+              - "https://www.example.com/assets/app.js"
+          no_log: true
+          tags: ['akamai', 'purge']
+
+        # ====================================================================
+        # 7. Jira ITSM: Mark Ticket Resolved
+        # ====================================================================
+        - name: Transition Jira Ticket to 'Resolved'
+          community.general.jira:
+            uri: "{{ vault_jira_url }}"
+            username: "{{ vault_jira_username }}"
+            password: "{{ vault_jira_token }}"
+            issue: "{{ active_ticket_key }}"
+            operation: transition
+            status: "Resolved"
+            comment: >
+              All maintenance tasks succeeded.
+              - Zscaler ZIA URL Whitelist verified.
+              - F5 pool member drained and re-enabled.
+              - Akamai Fast Purge cache invalidated on {{ akamai_network }}.
+          no_log: true
+          tags: ['jira', 'close']
+
+      rescue:
+        # ====================================================================
+        # Automatic Rescue & Failure Escalation
+        # ====================================================================
+        - name: Ensure F5 Pool Member is Re-Enabled during emergency rollback
+          f5networks.f5_modules.bigip_pool_member:
+            provider: "{{ f5_provider }}"
+            pool: "app_http_pool"
+            partition: "Common"
+            name: "{{ pool_member_target }}"
+            state: "enabled"
+          ignore_errors: true
+          tags: ['f5', 'rollback']
+
+        - name: Post Failure Incident Details to Jira Ticket
+          community.general.jira:
+            uri: "{{ vault_jira_url }}"
+            username: "{{ vault_jira_username }}"
+            password: "{{ vault_jira_token }}"
+            issue: "{{ active_ticket_key | default('OPS-UNKNOWN') }}"
+            operation: comment
+            comment: >
+              🚨 AUTOMATION FAILURE: Maintenance workflow aborted!
+              Failed Task: {{ ansible_failed_task.name | default('Unknown') }}
+              Error: {{ ansible_failed_result.msg | default('Unknown execution error') }}
+          when: active_ticket_key is defined
+          no_log: true
+          ignore_errors: true
+          tags: ['jira', 'fail']
+
+        - name: Fail Playbook Execution
+          ansible.builtin.fail:
+            msg: "Enterprise orchestration aborted due to task failure. Check Jira ticket {{ active_ticket_key | default('N/A') }}."

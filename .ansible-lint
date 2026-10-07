@@ -1,0 +1,68 @@
+---
+# ansible-lint configuration
+# Profile: production — strictest rule set
+profile: production
+
+# Enforce FQCN for all modules
+enable_list:
+  - fqcn
+  - yaml
+  - name
+  - no-changed-when
+  - no-handler
+  - risky-shell-pipe
+  - command-instead-of-shell
+  - command-instead-of-module
+  - no-jinja-when
+  - no-tabs
+  - role-name
+  - var-naming
+
+# Skip only rules with documented justification
+skip_list: []
+
+# Warn on experimental rules (don't block)
+warn_list:
+  - experimental
+  - role-name[path]
+
+# Paths to exclude from linting
+exclude_paths:
+  - .github/
+  - .vscode/
+  - scripts/
+  - mcp-server/
+  - prompts/
+  - molecule/
+  - .pre-commit-config.yaml
+
+# Parseable output for CI integration
+parseable: true
+
+# Use progressive mode (only flag new issues in existing files)
+# Uncomment for gradual adoption:
+# progressive: true
+
+# Offline mode — don't download schemas
+offline: false
+
+# Strict mode — treat warnings as errors
+strict: true
+
+# Custom rules directory (for project-specific rules)
+# rulesdir:
+#   - .ansible-lint-rules/
+
+# Mock modules/roles to prevent false positives during development
+# Add any custom modules here that aren't in installed collections
+mock_modules: []
+mock_roles: []
+
+# File matching for Ansible content detection
+kinds:
+  - playbook: "playbooks/*.{yml,yaml}"
+  - tasks: "roles/*/tasks/*.{yml,yaml}"
+  - handlers: "roles/*/handlers/*.{yml,yaml}"
+  - vars: "roles/*/vars/*.{yml,yaml}"
+  - defaults: "roles/*/defaults/*.{yml,yaml}"
+  - meta: "roles/*/meta/*.{yml,yaml}"

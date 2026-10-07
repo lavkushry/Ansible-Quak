@@ -1,0 +1,10 @@
+{
+  "ansible.ansibleLint.enabled": true,
+  "ansible.python.interpreterPath": "python3",
+  "files.associations": {
+    "*.yml": "ansible",
+    "*.yaml": "ansible",
+    "hosts": "ini"
+  },
+  "editor.formatOnSave": true
+}

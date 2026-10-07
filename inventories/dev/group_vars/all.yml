@@ -1,0 +1,52 @@
+---
+# Common Environment Configuration (Development)
+ansible_user: deploy
+env: dev
+
+# ==============================================================================
+# F5 BIG-IP ADC Configuration
+# ==============================================================================
+f5_provider:
+  server: "{{ inventory_hostname | default('f5-dev.corp.internal') }}"
+  user: "{{ vault_f5_username | default('admin') }}"
+  password: "{{ vault_f5_password | default('mock_password_dev') }}"
+  server_port: 443
+  validate_certs: false
+  transport: rest
+
+# ==============================================================================
+# Akamai EdgeGrid CDN & DNS
+# ==============================================================================
+akamai_edgerc_file: "~/.edgerc"
+akamai_section: "default"
+vault_akamai_host: "akab-dummy-dev.luna.akamaiapis.com"
+vault_akamai_client_token: "mock-client-token"
+vault_akamai_client_secret: "mock-client-secret"
+vault_akamai_access_token: "mock-access-token"
+
+# ==============================================================================
+# Jira ITSM Integration
+# ==============================================================================
+vault_jira_url: "https://mock-company.atlassian.net"
+vault_jira_username: "automation-bot@example.com"
+vault_jira_token: "mock_jira_api_token"
+
+# ==============================================================================
+# Zscaler Cloud Security (ZIA & ZPA)
+# ==============================================================================
+vault_zia_cloud: "zscaler.net"
+vault_zia_username: "zia-admin@example.com"
+vault_zia_password: "mock_zia_password"
+vault_zia_api_key: "mock_zia_api_key"
+
+vault_zpa_client_id: "mock_zpa_client_id"
+vault_zpa_client_secret: "mock_zpa_client_secret"
+vault_zpa_customer_id: "12345678"
+vault_zpa_cloud: "PRODUCTION"
+
+# ==============================================================================
+# Multi-Cloud Defaults
+# ==============================================================================
+aws_region: "us-east-1"
+azure_location: "eastus"
+gcp_project_id: "mock-gcp-dev-project"

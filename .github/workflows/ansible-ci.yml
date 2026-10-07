@@ -1,0 +1,55 @@
+name: Ansible CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ansible: ['core-2.15', 'core-2.16']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Ansible
+      run: pip install "ansible-${{ matrix.ansible }}" ansible-lint yamllint molecule
+
+    - name: Install Collections
+      run: ansible-galaxy collection install -r requirements.yml
+
+    - name: Yaml Lint
+      run: yamllint .
+
+    - name: Ansible Lint
+      run: ansible-lint -f sarif > ansible-lint.sarif
+      continue-on-error: true
+
+    - name: Syntax Check
+      run: ansible-playbook --syntax-check playbooks/*.yml
+
+    - name: Custom Validation Scripts
+      run: |
+        chmod +x scripts/*.sh
+        ./scripts/check-fqcn.sh
+        ./scripts/verify-modules.sh
+
+    - name: Molecule Test
+      run: molecule test
+      working-directory: examples/gold-standard-role
+      continue-on-error: true
+
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ansible-lint.sarif

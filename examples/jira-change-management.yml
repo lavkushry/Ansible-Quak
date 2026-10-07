@@ -1,0 +1,53 @@
+---
+# Example: Jira ITSM Change Management Automation
+# Demonstrates community.general.jira for creating, commenting, and transitioning tickets
+
+- name: Automated Change Ticket Lifecycle Management
+  hosts: localhost
+  gather_facts: false
+  vars:
+    jira_base_url: "{{ vault_jira_url | default('https://yourcompany.atlassian.net') }}"
+    jira_user: "{{ vault_jira_username | default('automation@example.com') }}"
+    jira_api_token: "{{ vault_jira_token | default('token') }}"
+
+  tasks:
+    - name: Create Change Request in Jira
+      community.general.jira:
+        uri: "{{ jira_base_url }}"
+        username: "{{ jira_user }}"
+        password: "{{ jira_api_token }}"
+        project: "CHG"
+        issuetype: "Change"
+        summary: "[AUTOMATION] Upgrade Core Load Balancer Configurations"
+        description: "Routine maintenance runbook triggered via Ansible pipeline."
+        operation: create
+      register: new_ticket
+      no_log: true
+      tags: ['jira']
+
+    - name: Display Created Ticket Key
+      ansible.builtin.debug:
+        msg: "Created Jira Change Request: {{ new_ticket.meta.key }}"
+
+    - name: Post Execution Progress Comment to Jira
+      community.general.jira:
+        uri: "{{ jira_base_url }}"
+        username: "{{ jira_user }}"
+        password: "{{ jira_api_token }}"
+        issue: "{{ new_ticket.meta.key }}"
+        operation: comment
+        comment: "Step 1 of 3 completed: F5 pool configurations updated and validated."
+      no_log: true
+      tags: ['jira']
+
+    - name: Close and Resolve Ticket Post Validation
+      community.general.jira:
+        uri: "{{ jira_base_url }}"
+        username: "{{ jira_user }}"
+        password: "{{ jira_api_token }}"
+        issue: "{{ new_ticket.meta.key }}"
+        operation: transition
+        status: "Done"
+        comment: "All validation checks passed with 0 errors. Closing change ticket."
+      no_log: true
+      tags: ['jira']

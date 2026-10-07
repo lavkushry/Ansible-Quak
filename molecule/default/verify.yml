@@ -1,0 +1,10 @@
+---
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Example assertion
+      ansible.builtin.assert:
+        that:
+          - true
+        fail_msg: "Verification failed"
+        success_msg: "Verification passed"

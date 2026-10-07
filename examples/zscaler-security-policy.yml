@@ -1,0 +1,57 @@
+---
+# Example: Zscaler Zero Trust Automation (ZIA & ZPA)
+# Demonstrates separation between zscaler.ziacloud and zscaler.zpacloud
+
+- name: Configure Zscaler Cloud Security & Zero Trust Access
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    # ------------------------------------------------------------------------
+    # ZIA: Zscaler Internet Access (Outbound Inspection & URL Filtering)
+    # ------------------------------------------------------------------------
+    - name: Manage Custom URL Filtering Category in ZIA
+      zscaler.ziacloud.zia_url_categories:
+        provider:
+          username: "{{ vault_zia_username | default('admin') }}"
+          password: "{{ vault_zia_password | default('pass') }}"
+          api_key: "{{ vault_zia_api_key | default('key') }}"
+          cloud: "{{ vault_zia_cloud | default('zscaler.net') }}"
+        configured_name: "Internal_Developer_Resources"
+        super_category: "USER_DEFINED"
+        urls:
+          - "internal-docs.company.net"
+          - "git.corp.internal"
+        state: present
+      no_log: true
+      tags: ['zscaler', 'zia']
+
+    - name: Commit & Activate Configuration in ZIA
+      zscaler.ziacloud.zia_activation:
+        provider:
+          username: "{{ vault_zia_username | default('admin') }}"
+          password: "{{ vault_zia_password | default('pass') }}"
+          api_key: "{{ vault_zia_api_key | default('key') }}"
+          cloud: "{{ vault_zia_cloud | default('zscaler.net') }}"
+      no_log: true
+      tags: ['zscaler', 'zia']
+
+    # ------------------------------------------------------------------------
+    # ZPA: Zscaler Private Access (Inbound App Access / ZTNA)
+    # ------------------------------------------------------------------------
+    - name: Ensure Application Segment is Configured in ZPA
+      zscaler.zpacloud.zpa_application_segment:
+        client_id: "{{ vault_zpa_client_id | default('client') }}"
+        client_secret: "{{ vault_zpa_client_secret | default('secret') }}"
+        customer_id: "{{ vault_zpa_customer_id | default('1234') }}"
+        name: "Security_Audit_Platform"
+        domain_names:
+          - "audit.corp.internal"
+        segment_group_id: "216196257331291981"
+        server_groups:
+          - id: "216196257331291982"
+        tcp_port_ranges:
+          - "443"
+        enabled: true
+      no_log: true
+      tags: ['zscaler', 'zpa']

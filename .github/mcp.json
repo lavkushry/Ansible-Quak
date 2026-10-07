@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ansible-docs": {
+      "command": "python",
+      "args": [
+        "mcp-server/ansible-docs-server.py"
+      ],
+      "env": {}
+    }
+  }
+}

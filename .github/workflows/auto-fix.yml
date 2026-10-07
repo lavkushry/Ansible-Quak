@@ -1,0 +1,31 @@
+name: Auto-Fix Ansible Lint
+
+on:
+  pull_request:
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install ansible ansible-lint
+
+    - name: Run ansible-lint --fix
+      run: ansible-lint --fix || true
+
+    - name: Commit fixes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "style: apply ansible-lint auto-fixes"

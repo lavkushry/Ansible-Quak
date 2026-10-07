@@ -1,0 +1,94 @@
+---
+# Gold-standard example tasks demonstrating Ansible best practices
+
+- name: Pre-flight assertion
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == 'Debian'
+    fail_msg: "This setup requires a Debian-based OS."
+  tags: ['preflight']
+
+- name: Install Nginx package (FQCN used)
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  become: true
+  tags: ['nginx', 'packages']
+
+- name: Deploy configuration template
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart Nginx
+  tags: ['nginx', 'config']
+
+- name: Ensure correct file permissions on web directory
+  ansible.builtin.file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: true
+  tags: ['web', 'permissions']
+
+- name: Create application user
+  ansible.builtin.user:
+    name: appuser
+    state: present
+    shell: /bin/bash
+    system: true
+  become: true
+  tags: ['users']
+
+- name: Allow HTTPS through firewall
+  ansible.posix.firewalld:
+    service: https
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+  tags: ['firewall']
+
+- name: Configure nightly backup cron job
+  ansible.builtin.cron:
+    name: "Nightly DB Backup"
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/backup.sh > /dev/null 2>&1"
+    user: appuser
+  become: true
+  tags: ['cron']
+
+- name: Clone application repository
+  ansible.builtin.git:
+    repo: 'https://github.com/example/app.git'
+    dest: /opt/app
+    version: main
+    update: true
+  become: true
+  tags: ['git', 'app']
+
+- name: Ensure Docker container is running
+  community.docker.docker_container:
+    name: my_app
+    image: my_app:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "8080:80"
+  become: true
+  tags: ['docker']
+
+- name: Ensure Nginx service is running (Service management)
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+  become: true
+  tags: ['nginx', 'service']

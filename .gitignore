@@ -1,0 +1,33 @@
+# Ansible run artifacts
+*.retry
+*.log
+.ansible/
+
+# Ansible Vault
+vault_password
+.vault_pass
+.vault-pass*
+
+# Python
+*.pyc
+__pycache__/
+.venv/
+venv/
+*.egg-info/
+
+# Molecule & Testing
+.molecule/
+.tox/
+.cache/
+.pytest_cache/
+
+# Ansible Collections (local cache)
+collections/
+roles/imported/
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/

@@ -1,0 +1,59 @@
+---
+# Example: F5 BIG-IP Declarative AS3 Application Deployment
+# Demonstrates FQCN, provider dict, and idempotent AS3 declaration
+
+- name: Deploy L4-L7 Application Service using F5 AS3
+  hosts: localhost
+  gather_facts: false
+  vars:
+    f5_provider:
+      server: "f5.corp.internal"
+      user: "{{ vault_f5_username | default('admin') }}"
+      password: "{{ vault_f5_password | default('secret') }}"
+      validate_certs: false
+      transport: rest
+
+  tasks:
+    - name: Push Declarative AS3 Application Definition to BIG-IP
+      f5networks.f5_modules.bigip_as3_deploy:
+        provider: "{{ f5_provider }}"
+        content:
+          class: "AS3"
+          action: "deploy"
+          persist: true
+          declaration:
+            class: "ADC"
+            schemaVersion: "3.45.0"
+            id: "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+            Production_Tenant:
+              class: "Tenant"
+              Secure_Web_App:
+                class: "Application"
+                template: "https"
+                serviceMain:
+                  class: "Service_HTTPS"
+                  virtualAddresses:
+                    - "10.200.10.100"
+                  virtualPort: 443
+                  pool: "web_servers_pool"
+                  serverTLS: "webtls"
+                webtls:
+                  class: "Server_TLS"
+                  certificates:
+                    - certificate: "webcert"
+                webcert:
+                  class: "Certificate"
+                  certificate:
+                    bigip: "/Common/default.crt"
+                  privateKey:
+                    bigip: "/Common/default.key"
+                web_servers_pool:
+                  class: "Pool"
+                  monitors:
+                    - "http"
+                  members:
+                    - servicePort: 8080
+                      serverAddresses:
+                        - "10.200.10.11"
+                        - "10.200.10.12"
+      tags: ['f5', 'as3']

@@ -1,0 +1,6 @@
+---
+# defaults file for webserver
+webserver_port: 80
+webserver_packages:
+  - nginx
+  - curl

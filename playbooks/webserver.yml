@@ -1,0 +1,8 @@
+---
+- name: Configure Webservers
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Apply gold-standard role
+      ansible.builtin.include_role:
+        name: ../examples/gold-standard-role

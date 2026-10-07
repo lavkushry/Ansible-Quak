@@ -1,0 +1,42 @@
+---
+# Example: Akamai CDN Fast Purge and Edge DNS Record Management
+# Demonstrates akamai.edgegrid FQCN, authentication, and idempotency
+
+- name: Akamai Edge CDN & DNS Automation
+  hosts: localhost
+  gather_facts: false
+  vars:
+    akamai_zone: "example.com"
+    edge_hostname: "example.com.edgekey.net."
+
+  tasks:
+    - name: Invalidate Specific URL Assets via Akamai Fast Purge (CCU v3)
+      akamai.edgegrid.cache_purge:
+        hostname: "{{ vault_akamai_host | default('akab-dev.luna.akamaiapis.com') }}"
+        client_token: "{{ vault_akamai_client_token | default('token') }}"
+        client_secret: "{{ vault_akamai_client_secret | default('secret') }}"
+        access_token: "{{ vault_akamai_access_token | default('access') }}"
+        network: "staging"
+        purge_type: "url"
+        action: "invalidate"
+        objects:
+          - "https://www.example.com/assets/bundle.min.js"
+          - "https://www.example.com/assets/style.min.css"
+      no_log: true
+      tags: ['akamai', 'purge']
+
+    - name: Ensure Edge DNS CNAME Record is Pointing to Akamai Edge
+      akamai.edgegrid.dns_record:
+        hostname: "{{ vault_akamai_host | default('akab-dev.luna.akamaiapis.com') }}"
+        client_token: "{{ vault_akamai_client_token | default('token') }}"
+        client_secret: "{{ vault_akamai_client_secret | default('secret') }}"
+        access_token: "{{ vault_akamai_access_token | default('access') }}"
+        zone: "{{ akamai_zone }}"
+        name: "shop.example.com"
+        type: "CNAME"
+        target: ["{{ edge_hostname }}"]
+        ttl: 300
+        active: true
+        state: present
+      no_log: true
+      tags: ['akamai', 'dns']

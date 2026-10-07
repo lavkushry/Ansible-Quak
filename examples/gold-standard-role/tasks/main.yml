@@ -1,0 +1,25 @@
+---
+# tasks file for webserver
+- name: Include OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  ignore_errors: true
+  tags: ['always']
+
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ webserver_packages }}"
+  become: true
+  tags: ['packages']
+
+- name: Deploy webserver configuration
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart Webserver
+  tags: ['config']

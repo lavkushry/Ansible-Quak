@@ -1,0 +1,4 @@
+---
+# vars file for webserver
+# Use for values that should rarely be overridden
+internal_service_name: "nginx"
