@@ -1,0 +1,13 @@
+---
+- name: Synchronize Active Configuration Across F5 HA Pair
+  f5networks.f5_modules.bigip_configsync_action:
+    provider: "{{ f5_provider }}"
+    device_group: "{{ f5_sync_device_group }}"
+    sync_device_to_group: true
+  delegate_to: localhost
+  tags: ['f5', 'sync']
+
+- name: Display HA Synchronization Success
+  ansible.builtin.debug:
+    msg: "Configuration successfully synchronized across device group {{ f5_sync_device_group }}."
+  tags: ['f5', 'sync']

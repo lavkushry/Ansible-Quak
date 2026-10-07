@@ -1,0 +1,21 @@
+---
+- name: Set Pool Member State to Disabled (Drain active connections)
+  f5networks.f5_modules.bigip_pool_member:
+    provider: "{{ f5_provider }}"
+    pool: "{{ f5_pool_name }}"
+    partition: "{{ f5_partition }}"
+    name: "{{ f5_member_name }}"
+    state: "disabled"
+  delegate_to: localhost
+  tags: ['f5', 'drain']
+
+- name: Pause Briefly for Connection Drain Window
+  ansible.builtin.pause:
+    seconds: "{{ f5_drain_poll_delay_seconds }}"
+  when: f5_drain_wait_active_connections | bool
+  tags: ['f5', 'drain']
+
+- name: Confirm Member is Drained
+  ansible.builtin.debug:
+    msg: "Pool member {{ f5_member_name }} in pool {{ f5_pool_name }} is now marked DISABLED (draining)."
+  tags: ['f5', 'drain']

@@ -1,0 +1,13 @@
+---
+# Defaults for jira_itsm_lifecycle role
+jira_action: "create"  # Options: create, gate, comment, transition
+jira_project: "OPS"
+jira_issuetype: "Change Request"
+jira_summary: "[AUTOMATION] Scheduled Infrastructure Change"
+jira_description: "Automated maintenance playbook executed via Ansible."
+jira_comment: "Automated milestone achieved."
+jira_target_status: "Resolved"
+jira_approved_statuses:
+  - "Approved"
+  - "In Progress"
+  - "Ready for Implementation"

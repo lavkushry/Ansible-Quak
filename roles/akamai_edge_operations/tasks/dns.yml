@@ -1,0 +1,22 @@
+---
+- name: Ensure Akamai Edge DNS Record is Configured
+  akamai.edgegrid.dns_record:
+    hostname: "{{ vault_akamai_host }}"
+    client_token: "{{ vault_akamai_client_token }}"
+    client_secret: "{{ vault_akamai_client_secret }}"
+    access_token: "{{ vault_akamai_access_token }}"
+    zone: "{{ akamai_dns_zone }}"
+    name: "{{ akamai_dns_record_name }}"
+    type: "{{ akamai_dns_record_type }}"
+    target: "{{ akamai_dns_record_target }}"
+    ttl: "{{ akamai_dns_ttl }}"
+    state: "{{ akamai_dns_state }}"
+    active: true
+  delegate_to: localhost
+  no_log: true
+  tags: ['akamai', 'dns']
+
+- name: Display Edge DNS Update Status
+  ansible.builtin.debug:
+    msg: "Edge DNS Record '{{ akamai_dns_record_name }}' ({{ akamai_dns_record_type }}) set to {{ akamai_dns_state }} in zone {{ akamai_dns_zone }}."
+  tags: ['akamai', 'dns']

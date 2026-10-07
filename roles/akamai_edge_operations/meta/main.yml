@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author: Enterprise Network Automation
+  description: Akamai EdgeGrid CDN Fast Purge and Edge DNS Operations
+  company: Enterprise Infrastructure
+  license: MIT
+  min_ansible_version: "2.15.0"
+  platforms:
+    - name: GenericUNIX
+      versions:
+        - all
+  galaxy_tags:
+    - akamai
+    - cdn
+    - dns
+    - edgegrid
+    - purge
+
+collections:
+  - name: akamai.edgegrid
+  - name: ansible.builtin
+
+dependencies: []

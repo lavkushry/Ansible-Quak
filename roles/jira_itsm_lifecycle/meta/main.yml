@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author: Enterprise DevOps & ITSM
+  description: Jira Change Request Lifecycle & Approval Gating
+  company: Enterprise Infrastructure
+  license: MIT
+  min_ansible_version: "2.15.0"
+  platforms:
+    - name: GenericUNIX
+      versions:
+        - all
+  galaxy_tags:
+    - jira
+    - itsm
+    - change
+    - approval
+    - compliance
+
+collections:
+  - name: community.general
+  - name: ansible.builtin
+
+dependencies: []

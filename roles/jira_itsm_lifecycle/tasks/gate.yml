@@ -1,0 +1,21 @@
+---
+- name: Fetch Ticket Status from Jira
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    issue: "{{ active_jira_ticket_key }}"
+    operation: fetch
+  delegate_to: localhost
+  register: fetched_jira_ticket
+  no_log: true
+  tags: ['jira', 'gate']
+
+- name: Assert Ticket is in Approved Status Before Proceeding
+  ansible.builtin.assert:
+    that:
+      - fetched_jira_ticket.meta.fields.status.name in jira_approved_statuses
+    fail_msg: >
+      ABORT: Jira ticket {{ active_jira_ticket_key }} is in status
+      '{{ fetched_jira_ticket.meta.fields.status.name }}'. Must be one of {{ jira_approved_statuses }}.
+  tags: ['jira', 'gate']

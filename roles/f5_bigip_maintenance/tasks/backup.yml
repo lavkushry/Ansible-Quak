@@ -1,0 +1,14 @@
+---
+- name: Create F5 UCS Pre-Change Configuration Archive
+  f5networks.f5_modules.bigip_ucs:
+    provider: "{{ f5_provider }}"
+    ucs: "{{ f5_ucs_backup_name }}"
+    state: present
+  delegate_to: localhost
+  register: ucs_creation_result
+  tags: ['f5', 'backup']
+
+- name: Display UCS Backup Confirmation
+  ansible.builtin.debug:
+    msg: "F5 Pre-change backup created successfully: {{ f5_ucs_backup_name }}"
+  tags: ['f5', 'backup']

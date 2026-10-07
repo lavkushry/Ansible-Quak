@@ -1,0 +1,31 @@
+---
+- name: Configure ZIA Custom URL Category
+  zscaler.ziacloud.zia_url_categories:
+    provider:
+      username: "{{ vault_zia_username }}"
+      password: "{{ vault_zia_password }}"
+      api_key: "{{ vault_zia_api_key }}"
+      cloud: "{{ vault_zia_cloud }}"
+    configured_name: "{{ zscaler_zia_category_name }}"
+    super_category: "{{ zscaler_zia_super_category }}"
+    urls: "{{ zscaler_zia_urls }}"
+    state: present
+  delegate_to: localhost
+  no_log: true
+  tags: ['zscaler', 'zia']
+
+- name: Commit Policy Changes to ZIA Cloud
+  zscaler.ziacloud.zia_activation:
+    provider:
+      username: "{{ vault_zia_username }}"
+      password: "{{ vault_zia_password }}"
+      api_key: "{{ vault_zia_api_key }}"
+      cloud: "{{ vault_zia_cloud }}"
+  delegate_to: localhost
+  no_log: true
+  tags: ['zscaler', 'zia', 'activate']
+
+- name: Confirm ZIA Policy Activation
+  ansible.builtin.debug:
+    msg: "ZIA URL category '{{ zscaler_zia_category_name }}' updated and changes activated."
+  tags: ['zscaler', 'zia']

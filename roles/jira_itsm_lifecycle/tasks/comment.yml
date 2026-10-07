@@ -1,0 +1,12 @@
+---
+- name: Post Milestone Comment to Jira
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    issue: "{{ active_jira_ticket_key }}"
+    operation: comment
+    comment: "{{ jira_comment }}"
+  delegate_to: localhost
+  no_log: true
+  tags: ['jira', 'comment']

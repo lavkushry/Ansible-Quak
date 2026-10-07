@@ -1,0 +1,20 @@
+---
+- name: Execute Fast Purge against Akamai Edge CDN
+  akamai.edgegrid.cache_purge:
+    hostname: "{{ vault_akamai_host }}"
+    client_token: "{{ vault_akamai_client_token }}"
+    client_secret: "{{ vault_akamai_client_secret }}"
+    access_token: "{{ vault_akamai_access_token }}"
+    network: "{{ akamai_network }}"
+    purge_type: "{{ akamai_purge_type }}"
+    action: "{{ akamai_purge_action }}"
+    objects: "{{ akamai_purge_objects }}"
+  delegate_to: localhost
+  no_log: true
+  register: purge_exec_result
+  tags: ['akamai', 'purge']
+
+- name: Display Akamai Purge Request Output
+  ansible.builtin.debug:
+    msg: "Purge request completed on network '{{ akamai_network }}'. Purged {{ akamai_purge_objects | length }} item(s)."
+  tags: ['akamai', 'purge']

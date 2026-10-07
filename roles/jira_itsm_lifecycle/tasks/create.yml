@@ -1,0 +1,25 @@
+---
+- name: Create Jira Issue for Change Lifecycle
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    project: "{{ jira_project }}"
+    issuetype: "{{ jira_issuetype }}"
+    summary: "{{ jira_summary }}"
+    description: "{{ jira_description }}"
+    operation: create
+  delegate_to: localhost
+  register: jira_create_result
+  no_log: true
+  tags: ['jira', 'create']
+
+- name: Store Created Jira Issue Key
+  ansible.builtin.set_fact:
+    active_jira_ticket_key: "{{ jira_create_result.meta.key }}"
+  tags: ['jira', 'create']
+
+- name: Display Created Ticket Key
+  ansible.builtin.debug:
+    msg: "Jira ticket created successfully: {{ active_jira_ticket_key }}"
+  tags: ['jira', 'create']

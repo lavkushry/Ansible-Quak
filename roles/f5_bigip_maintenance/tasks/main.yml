@@ -1,0 +1,31 @@
+---
+# Main task dispatcher for f5_bigip_maintenance
+- name: Validate F5 Provider Dictionary is Configured
+  ansible.builtin.assert:
+    that:
+      - f5_provider is defined
+      - f5_provider.server is defined
+      - f5_provider.user is defined
+    fail_msg: "f5_provider dictionary (server, user, password) must be defined."
+  delegate_to: localhost
+  tags: ['f5', 'validation']
+
+- name: Execute UCS Pre-change Backup
+  ansible.builtin.include_tasks: backup.yml
+  when: f5_action == 'backup'
+  tags: ['f5', 'backup']
+
+- name: Execute Graceful Pool Member Drain
+  ansible.builtin.include_tasks: drain.yml
+  when: f5_action == 'drain'
+  tags: ['f5', 'drain']
+
+- name: Execute Pool Member Re-Enable
+  ansible.builtin.include_tasks: enable.yml
+  when: f5_action == 'enable'
+  tags: ['f5', 'enable']
+
+- name: Execute HA Config-Sync
+  ansible.builtin.include_tasks: sync.yml
+  when: f5_action == 'sync'
+  tags: ['f5', 'sync']

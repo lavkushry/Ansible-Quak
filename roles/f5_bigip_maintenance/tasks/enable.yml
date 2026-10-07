@@ -1,0 +1,15 @@
+---
+- name: Set Pool Member State to Enabled (Allow new traffic)
+  f5networks.f5_modules.bigip_pool_member:
+    provider: "{{ f5_provider }}"
+    pool: "{{ f5_pool_name }}"
+    partition: "{{ f5_partition }}"
+    name: "{{ f5_member_name }}"
+    state: "enabled"
+  delegate_to: localhost
+  tags: ['f5', 'enable']
+
+- name: Confirm Member is Re-Enabled
+  ansible.builtin.debug:
+    msg: "Pool member {{ f5_member_name }} in pool {{ f5_pool_name }} is now marked ENABLED and receiving traffic."
+  tags: ['f5', 'enable']

@@ -1,0 +1,21 @@
+---
+# Defaults for zscaler_policy_manager role
+zscaler_action: "url_category"  # Options: url_category, app_segment
+
+# ZIA defaults
+zscaler_zia_category_name: "Corporate_Allowed_APIs"
+zscaler_zia_super_category: "USER_DEFINED"
+zscaler_zia_urls:
+  - "api.partner-services.io"
+  - "auth.identity-provider.com"
+
+# ZPA defaults
+zscaler_zpa_segment_name: "Internal_Monitoring_Dashboards"
+zscaler_zpa_domain_names:
+  - "monitoring.corp.internal"
+zscaler_zpa_segment_group_id: "216196257331291981"
+zscaler_zpa_server_groups:
+  - id: "216196257331291982"
+zscaler_zpa_tcp_ports:
+  - "443"
+  - "8443"

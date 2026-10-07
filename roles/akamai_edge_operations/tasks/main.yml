@@ -1,0 +1,10 @@
+---
+- name: Dispatch Akamai Fast Purge Tasks
+  ansible.builtin.include_tasks: purge.yml
+  when: akamai_action == 'purge'
+  tags: ['akamai', 'purge']
+
+- name: Dispatch Akamai Edge DNS Tasks
+  ansible.builtin.include_tasks: dns.yml
+  when: akamai_action == 'dns'
+  tags: ['akamai', 'dns']

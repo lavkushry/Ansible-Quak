@@ -1,0 +1,16 @@
+---
+# Default variables for f5_bigip_maintenance role
+f5_action: "drain"  # Options: backup, drain, enable, sync
+f5_partition: "Common"
+f5_pool_name: "app_http_pool"
+f5_member_name: "10.100.20.11:8080"
+f5_sync_device_group: "SyncFailoverGroup"
+
+# Connection drain polling
+f5_drain_wait_active_connections: true
+f5_drain_poll_retries: 12
+f5_drain_poll_delay_seconds: 5
+
+# UCS backup settings
+f5_ucs_backup_name: "pre_change_{{ ansible_date_time.iso8601_basic_short | default('backup') }}.ucs"
+f5_ucs_download_local: false

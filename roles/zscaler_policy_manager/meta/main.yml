@@ -1,0 +1,24 @@
+---
+galaxy_info:
+  author: Enterprise Network Security
+  description: Zscaler Cloud Security (ZIA URL filtering & ZPA App Segments)
+  company: Enterprise Infrastructure
+  license: MIT
+  min_ansible_version: "2.15.0"
+  platforms:
+    - name: GenericUNIX
+      versions:
+        - all
+  galaxy_tags:
+    - zscaler
+    - zia
+    - zpa
+    - zerotrust
+    - security
+
+collections:
+  - name: zscaler.ziacloud
+  - name: zscaler.zpacloud
+  - name: ansible.builtin
+
+dependencies: []

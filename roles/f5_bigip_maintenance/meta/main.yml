@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author: Enterprise Network Automation
+  description: F5 BIG-IP ADC maintenance role (UCS backup, member drain/enable, HA sync)
+  company: Enterprise Infrastructure
+  license: MIT
+  min_ansible_version: "2.15.0"
+  platforms:
+    - name: GenericUNIX
+      versions:
+        - all
+  galaxy_tags:
+    - f5
+    - bigip
+    - loadbalancer
+    - adc
+    - maintenance
+
+collections:
+  - name: f5networks.f5_modules
+  - name: ansible.builtin
+
+dependencies: []

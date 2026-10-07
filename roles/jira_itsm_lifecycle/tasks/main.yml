@@ -1,0 +1,20 @@
+---
+- name: Create Jira Change Ticket
+  ansible.builtin.include_tasks: create.yml
+  when: jira_action == 'create'
+  tags: ['jira', 'create']
+
+- name: Gate Execution on Jira Ticket Approval
+  ansible.builtin.include_tasks: gate.yml
+  when: jira_action == 'gate'
+  tags: ['jira', 'gate']
+
+- name: Post Comment to Jira Ticket
+  ansible.builtin.include_tasks: comment.yml
+  when: jira_action == 'comment'
+  tags: ['jira', 'comment']
+
+- name: Transition Jira Ticket Status
+  ansible.builtin.include_tasks: transition.yml
+  when: jira_action == 'transition'
+  tags: ['jira', 'transition']

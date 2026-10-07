@@ -1,0 +1,21 @@
+---
+- name: Ensure ZPA Application Segment Exists
+  zscaler.zpacloud.zpa_application_segment:
+    client_id: "{{ vault_zpa_client_id }}"
+    client_secret: "{{ vault_zpa_client_secret }}"
+    customer_id: "{{ vault_zpa_customer_id }}"
+    name: "{{ zscaler_zpa_segment_name }}"
+    domain_names: "{{ zscaler_zpa_domain_names }}"
+    segment_group_id: "{{ zscaler_zpa_segment_group_id }}"
+    server_groups: "{{ zscaler_zpa_server_groups }}"
+    tcp_port_ranges: "{{ zscaler_zpa_tcp_ports }}"
+    enabled: true
+    is_cname_enabled: true
+  delegate_to: localhost
+  no_log: true
+  tags: ['zscaler', 'zpa']
+
+- name: Confirm ZPA Application Segment Deployment
+  ansible.builtin.debug:
+    msg: "ZPA Application Segment '{{ zscaler_zpa_segment_name }}' successfully configured."
+  tags: ['zscaler', 'zpa']

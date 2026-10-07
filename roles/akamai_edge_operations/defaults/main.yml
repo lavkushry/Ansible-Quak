@@ -1,0 +1,16 @@
+---
+# Defaults for akamai_edge_operations role
+akamai_action: "purge"  # Options: purge, dns, activation
+akamai_network: "staging"  # staging or production
+akamai_purge_type: "url"  # url, cpcode, tag
+akamai_purge_action: "invalidate"  # invalidate or delete
+akamai_purge_objects:
+  - "https://www.example.com/index.html"
+
+# DNS defaults
+akamai_dns_zone: "example.com"
+akamai_dns_record_name: "app.example.com"
+akamai_dns_record_type: "CNAME"
+akamai_dns_record_target: ["app.example.com.edgekey.net."]
+akamai_dns_ttl: 300
+akamai_dns_state: "present"

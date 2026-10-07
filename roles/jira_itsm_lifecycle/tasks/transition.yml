@@ -1,0 +1,18 @@
+---
+- name: Transition Jira Issue to Target Status
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    issue: "{{ active_jira_ticket_key }}"
+    operation: transition
+    status: "{{ jira_target_status }}"
+    comment: "Automated status transition to {{ jira_target_status }} via Ansible."
+  delegate_to: localhost
+  no_log: true
+  tags: ['jira', 'transition']
+
+- name: Display Transition Confirmation
+  ansible.builtin.debug:
+    msg: "Jira ticket {{ active_jira_ticket_key }} transitioned to '{{ jira_target_status }}'."
+  tags: ['jira', 'transition']

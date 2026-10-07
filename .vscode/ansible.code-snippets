@@ -1,0 +1,190 @@
+{
+  "F5 Pool Member Drain": {
+    "prefix": ["f5-drain", "ansible-f5-drain"],
+    "body": [
+      "- name: Drain F5 Pool Member for Maintenance",
+      "  f5networks.f5_modules.bigip_pool_member:",
+      "    provider: \"{{ f5_provider }}\"",
+      "    pool: \"${1:app_http_pool}\"",
+      "    partition: \"${2:Common}\"",
+      "    name: \"${3:10.100.20.11:8080}\"",
+      "    state: \"disabled\"",
+      "  delegate_to: localhost",
+      "  tags: ['f5', 'drain']"
+    ],
+    "description": "F5 BIG-IP pool member graceful connection drain"
+  },
+  "F5 Pool Member Enable": {
+    "prefix": ["f5-enable", "ansible-f5-enable"],
+    "body": [
+      "- name: Enable F5 Pool Member",
+      "  f5networks.f5_modules.bigip_pool_member:",
+      "    provider: \"{{ f5_provider }}\"",
+      "    pool: \"${1:app_http_pool}\"",
+      "    partition: \"${2:Common}\"",
+      "    name: \"${3:10.100.20.11:8080}\"",
+      "    state: \"enabled\"",
+      "  delegate_to: localhost",
+      "  tags: ['f5', 'enable']"
+    ],
+    "description": "F5 BIG-IP pool member enable"
+  },
+  "F5 AS3 Deploy": {
+    "prefix": ["f5-as3", "ansible-f5-as3"],
+    "body": [
+      "- name: Deploy F5 Application via AS3 Declaration",
+      "  f5networks.f5_modules.bigip_as3_deploy:",
+      "    provider: \"{{ f5_provider }}\"",
+      "    content: \"{{ lookup('ansible.builtin.template', '${1:as3_app.json.j2}') }}\"",
+      "    tenant: \"${2:Sample_Tenant}\"",
+      "  delegate_to: localhost",
+      "  tags: ['f5', 'as3']"
+    ],
+    "description": "F5 BIG-IP Declarative AS3 deployment"
+  },
+  "Akamai Fast Purge": {
+    "prefix": ["akamai-purge", "ansible-akamai-purge"],
+    "body": [
+      "- name: Fast Purge Akamai Edge Cache",
+      "  akamai.edgegrid.cache_purge:",
+      "    hostname: \"{{ vault_akamai_host }}\"",
+      "    client_token: \"{{ vault_akamai_client_token }}\"",
+      "    client_secret: \"{{ vault_akamai_client_secret }}\"",
+      "    access_token: \"{{ vault_akamai_access_token }}\"",
+      "    network: \"${1|staging,production|}\"",
+      "    purge_type: \"${2|url,cpcode,tag|}\"",
+      "    action: \"${3|invalidate,delete|}\"",
+      "    objects:",
+      "      - \"${4:https://www.example.com/index.html}\"",
+      "  delegate_to: localhost",
+      "  no_log: true",
+      "  tags: ['akamai', 'purge']"
+    ],
+    "description": "Akamai Fast Purge CCU v3"
+  },
+  "Akamai Edge DNS": {
+    "prefix": ["akamai-dns", "ansible-akamai-dns"],
+    "body": [
+      "- name: Manage Akamai Edge DNS Record",
+      "  akamai.edgegrid.dns_record:",
+      "    hostname: \"{{ vault_akamai_host }}\"",
+      "    client_token: \"{{ vault_akamai_client_token }}\"",
+      "    client_secret: \"{{ vault_akamai_client_secret }}\"",
+      "    access_token: \"{{ vault_akamai_access_token }}\"",
+      "    zone: \"${1:example.com}\"",
+      "    name: \"${2:app.example.com}\"",
+      "    type: \"${3|CNAME,A,TXT,MX|}\"",
+      "    target: [\"${4:app.example.com.edgekey.net.}\"]",
+      "    ttl: ${5:300}",
+      "    state: \"present\"",
+      "    active: true",
+      "  delegate_to: localhost",
+      "  no_log: true",
+      "  tags: ['akamai', 'dns']"
+    ],
+    "description": "Akamai Edge DNS Record management"
+  },
+  "Zscaler ZIA URL Category": {
+    "prefix": ["zscaler-zia-url", "zia-url"],
+    "body": [
+      "- name: Configure ZIA Custom URL Category",
+      "  zscaler.ziacloud.zia_url_categories:",
+      "    provider:",
+      "      username: \"{{ vault_zia_username }}\"",
+      "      password: \"{{ vault_zia_password }}\"",
+      "      api_key: \"{{ vault_zia_api_key }}\"",
+      "      cloud: \"{{ vault_zia_cloud }}\"",
+      "    configured_name: \"${1:Approved_Partner_APIs}\"",
+      "    super_category: \"USER_DEFINED\"",
+      "    urls:",
+      "      - \"${2:partner-api.vendor.com}\"",
+      "    state: present",
+      "  delegate_to: localhost",
+      "  no_log: true",
+      "  tags: ['zscaler', 'zia']"
+    ],
+    "description": "Zscaler ZIA URL category configuration"
+  },
+  "Zscaler ZPA App Segment": {
+    "prefix": ["zscaler-zpa-segment", "zpa-segment"],
+    "body": [
+      "- name: Ensure ZPA Application Segment Exists",
+      "  zscaler.zpacloud.zpa_application_segment:",
+      "    client_id: \"{{ vault_zpa_client_id }}\"",
+      "    client_secret: \"{{ vault_zpa_client_secret }}\"",
+      "    customer_id: \"{{ vault_zpa_customer_id }}\"",
+      "    name: \"${1:Internal_Workload_Access}\"",
+      "    domain_names:",
+      "      - \"${2:app.corp.internal}\"",
+      "    segment_group_id: \"${3:segment_id}\"",
+      "    server_groups:",
+      "      - id: \"${4:server_group_id}\"",
+      "    tcp_port_ranges:",
+      "      - \"${5:443}\"",
+      "    enabled: true",
+      "  delegate_to: localhost",
+      "  no_log: true",
+      "  tags: ['zscaler', 'zpa']"
+    ],
+    "description": "Zscaler ZPA Zero Trust application segment"
+  },
+  "Jira Change Ticket": {
+    "prefix": ["jira-ticket", "ansible-jira-change"],
+    "body": [
+      "- name: Create Jira Change Ticket for Maintenance",
+      "  community.general.jira:",
+      "    uri: \"{{ vault_jira_url }}\"",
+      "    username: \"{{ vault_jira_username }}\"",
+      "    password: \"{{ vault_jira_token }}\"",
+      "    project: \"${1:OPS}\"",
+      "    issuetype: \"Change Request\"",
+      "    summary: \"${2:[AUTOMATION] Infrastructure Maintenance}\"",
+      "    description: \"${3:Automated pipeline change execution.}\"",
+      "    operation: create",
+      "  delegate_to: localhost",
+      "  register: jira_ticket_result",
+      "  no_log: true",
+      "  tags: ['jira']"
+    ],
+    "description": "Jira ITSM Change ticket creation"
+  },
+  "Jira Transition": {
+    "prefix": ["jira-transition", "ansible-jira-close"],
+    "body": [
+      "- name: Transition Jira Ticket Status",
+      "  community.general.jira:",
+      "    uri: \"{{ vault_jira_url }}\"",
+      "    username: \"{{ vault_jira_username }}\"",
+      "    password: \"{{ vault_jira_token }}\"",
+      "    issue: \"{{ ${1:active_ticket_key} }}\"",
+      "    operation: transition",
+      "    status: \"${2|Resolved,Closed,In Progress|}\"",
+      "    comment: \"${3:Maintenance completed successfully.}\"",
+      "  delegate_to: localhost",
+      "  no_log: true",
+      "  tags: ['jira']"
+    ],
+    "description": "Jira issue status transition"
+  },
+  "AWS EC2 Instance": {
+    "prefix": ["aws-ec2", "ansible-ec2"],
+    "body": [
+      "- name: Launch AWS EC2 Instance",
+      "  amazon.aws.ec2_instance:",
+      "    name: \"${1:web-prod-node}\"",
+      "    image_id: \"${2:ami-0c55b159cbfafe1f0}\"",
+      "    instance_type: \"${3:t3.medium}\"",
+      "    key_name: \"${4:deployer-key}\"",
+      "    vpc_subnet_id: \"{{ ${5:private_subnet_id} }}\"",
+      "    security_group: \"{{ ${6:security_group_id} }}\"",
+      "    tags:",
+      "      Environment: \"Production\"",
+      "      ManagedBy: \"Ansible\"",
+      "    wait: true",
+      "    state: running",
+      "  delegate_to: localhost",
+      "  tags: ['aws', 'ec2']"
+    ],
+    "description": "AWS EC2 instance deployment"
+  }
+}

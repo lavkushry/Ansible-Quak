@@ -1,0 +1,10 @@
+---
+- name: Dispatch ZIA URL Category Management
+  ansible.builtin.include_tasks: zia_category.yml
+  when: zscaler_action == 'url_category'
+  tags: ['zscaler', 'zia']
+
+- name: Dispatch ZPA Application Segment Management
+  ansible.builtin.include_tasks: zpa_segment.yml
+  when: zscaler_action == 'app_segment'
+  tags: ['zscaler', 'zpa']
