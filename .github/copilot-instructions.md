@@ -29,7 +29,7 @@
   - Nodes & SSL: `f5networks.f5_modules.bigip_node`, `f5networks.f5_modules.bigip_ssl_certificate`
   - Always use `provider: "{{ f5_provider }}"` and `delegate_to: localhost`
 - **Zscaler Cloud Security**:
-  - ZIA (Internet Access): `zscaler.ziacloud.*` (`zia_url_categories`, `zia_url_filtering_rules`, `zia_activation`)
+  - ZIA (Internet Access): `zscaler.ziacloud.*` (`zia_url_categories`, `zia_url_filtering_rules`, `zia_activation_status` with `status: "ACTIVE"`)
   - ZPA (Private Access / ZTNA): `zscaler.zpacloud.*` (`zpa_application_segment`, `zpa_server_group`)
   - NEVER mix ZIA and ZPA modules across collections!
 - **Jira ITSM & Change Management**: `community.general.jira`

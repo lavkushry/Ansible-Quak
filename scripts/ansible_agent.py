@@ -126,12 +126,13 @@ TEMPLATES = {
   tags: ['zscaler', 'zia']
 
 - name: Activate Committed Policy Changes in ZIA
-  zscaler.ziacloud.zia_activation:
+  zscaler.ziacloud.zia_activation_status:
     provider:
       username: "{{ vault_zia_username }}"
       password: "{{ vault_zia_password }}"
       api_key: "{{ vault_zia_api_key }}"
       cloud: "{{ vault_zia_cloud | default('zscaler.net') }}"
+    status: "ACTIVE"
   delegate_to: localhost
   no_log: true
   tags: ['zscaler', 'activate']""",

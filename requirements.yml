@@ -14,9 +14,8 @@ collections:
   - name: f5networks.f5_modules
     version: ">=1.29.0"
 
-  # CDN, DNS & Edge Security (Akamai)
-  - name: akamai.edgegrid
-    version: ">=2.1.0"
+  # Note: Akamai does not maintain an official Galaxy collection;
+  # Akamai EdgeGrid API automation uses ansible.builtin.uri with EdgeGrid signing or Akamai CLI.
 
   # Zero Trust & Cloud Security (Zscaler ZIA / ZPA)
   - name: zscaler.ziacloud

@@ -21,8 +21,11 @@ venv/
 .cache/
 .pytest_cache/
 
-# Ansible Collections (local cache)
-collections/
+# Ansible Collections (ignore downloaded galaxy collections, keep local akamai collection)
+collections/*
+!collections/ansible_collections/
+collections/ansible_collections/*
+!collections/ansible_collections/akamai/
 roles/imported/
 
 # OS and Editor metadata

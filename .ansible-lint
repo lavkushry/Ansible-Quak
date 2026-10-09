@@ -28,6 +28,9 @@ warn_list:
 
 # Paths to exclude from linting
 exclude_paths:
+  - .venv/
+  - collections/
+  - examples/
   - .github/
   - .vscode/
   - scripts/
@@ -35,9 +38,6 @@ exclude_paths:
   - prompts/
   - molecule/
   - .pre-commit-config.yaml
-
-# Parseable output for CI integration
-parseable: true
 
 # Use progressive mode (only flag new issues in existing files)
 # Uncomment for gradual adoption:

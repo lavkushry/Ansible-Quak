@@ -1,0 +1,15 @@
+namespace: akamai
+name: edgegrid
+version: 2.1.0
+readme: README.md
+authors:
+  - Enterprise Automation Team
+description: Enterprise Akamai EdgeGrid CDN and Edge DNS automation modules
+license:
+  - Apache-2.0
+tags:
+  - akamai
+  - cdn
+  - dns
+  - edgegrid
+repository: https://github.com/lavkushry/Ansible-Quak

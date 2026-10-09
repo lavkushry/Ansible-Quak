@@ -7,12 +7,22 @@ rules:
   indentation:
     spaces: 2
     indent-sequences: true
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
   truthy:
     allowed-values:
       - 'true'
       - 'false'
-  comments:
-    require-starting-space: true
-    min-spaces-from-content: 1
   document-start: disable
   document-end: disable
+
+ignore: |
+  .venv/
+  collections/

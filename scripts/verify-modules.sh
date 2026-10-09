@@ -20,10 +20,15 @@ echo "  Module Existence Verification"
 echo "═══════════════════════════════════════════════════"
 echo ""
 
-# Check if ansible-doc is available
-if ! command -v ansible-doc &> /dev/null; then
-    echo -e "${YELLOW}⚠ ansible-doc not found. Install Ansible to enable module verification.${NC}"
-    exit 0
+# Check if ansible-doc is available (check PATH and .venv)
+ANSIBLE_DOC="ansible-doc"
+if ! command -v "$ANSIBLE_DOC" &> /dev/null; then
+    if [ -x "./.venv/bin/ansible-doc" ]; then
+        ANSIBLE_DOC="./.venv/bin/ansible-doc"
+    else
+        echo -e "${YELLOW}⚠ ansible-doc not found. Install Ansible to enable module verification.${NC}"
+        exit 0
+    fi
 fi
 
 SCAN_DIRS=()
@@ -63,7 +68,7 @@ while IFS= read -r module; do
     [ -z "$module" ] && continue
     TOTAL=$((TOTAL + 1))
 
-    if ansible-doc "$module" &>/dev/null; then
+    if "$ANSIBLE_DOC" "$module" &>/dev/null; then
         PASSED=$((PASSED + 1))
         echo -e "  ${GREEN}✓${NC} ${module}"
     else

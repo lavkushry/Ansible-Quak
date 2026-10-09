@@ -27,12 +27,13 @@
       tags: ['zscaler', 'zia']
 
     - name: Commit & Activate Configuration in ZIA
-      zscaler.ziacloud.zia_activation:
+      zscaler.ziacloud.zia_activation_status:
         provider:
           username: "{{ vault_zia_username | default('admin') }}"
           password: "{{ vault_zia_password | default('pass') }}"
           api_key: "{{ vault_zia_api_key | default('key') }}"
           cloud: "{{ vault_zia_cloud | default('zscaler.net') }}"
+        status: "ACTIVE"
       no_log: true
       tags: ['zscaler', 'zia']
 
