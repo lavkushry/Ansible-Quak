@@ -1,23 +1,20 @@
-.PHONY: lint syntax test validate install clean fqcn-check docs setup help
+.PHONY: lint syntax test validate install clean fqcn-check agent-audit setup help
 
 help:
 	@echo "Available targets:"
-	@echo "  lint        - Run ansible-lint"
-	@echo "  syntax      - Run syntax checks"
-	@echo "  test        - Run molecule tests"
-	@echo "  validate    - Run full validation suite"
-	@echo "  install     - Install dependencies"
-	@echo "  clean       - Clean up"
-	@echo "  fqcn-check  - Check FQCN usage"
-	@echo "  docs        - Generate documentation"
-	@echo "  setup       - One-command project setup"
+	@echo "  setup        - Install collections and dependencies"
+	@echo "  validate     - Run full multi-stage validation suite"
+	@echo "  fqcn-check   - Run AST-based FQCN anti-hallucination verification"
+	@echo "  agent-audit  - Run AI Agent AST audit across all playbooks"
+	@echo "  lint         - Run ansible-lint"
+	@echo "  syntax       - Run syntax checks"
+	@echo "  clean        - Clean temporary build and cache files"
 
 install:
-	pip install -r requirements.txt
 	ansible-galaxy collection install -r requirements.yml || true
 
 setup: install
-	pre-commit install
+	pip install -r mcp-server/requirements.txt || true
 
 lint:
 	ansible-lint
@@ -25,20 +22,15 @@ lint:
 syntax:
 	ansible-playbook --syntax-check playbooks/*.yml || true
 
-test:
-	molecule test
+fqcn-check:
+	./scripts/check-fqcn.sh
 
-validate: lint syntax fqcn-check test
+agent-audit:
+	@for f in playbooks/*.yml; do python3 scripts/ansible_agent.py audit "$$f"; done
+
+validate: fqcn-check agent-audit lint syntax
 
 clean:
-	rm -rf .tox/
-	rm -rf .pytest_cache/
-	rm -rf molecule/default/.molecule/
+	rm -rf .tox/ .pytest_cache/ molecule/default/.molecule/
 	find . -type f -name "*.retry" -delete
-
-fqcn-check:
-	@echo "Checking for missing FQCNs..."
-	@bash -c "grep -r -E '^[ \t]*[a-z_]+:[ \t]*$$' playbooks/ roles/ | grep -v 'ansible.builtin' && echo 'Found non-FQCN modules!' && exit 1 || exit 0"
-
-docs:
-	@echo "Documentation generation not implemented yet."
+	find . -type f -name ".DS_Store" -delete

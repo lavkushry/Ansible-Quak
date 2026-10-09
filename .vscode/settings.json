@@ -1,10 +1,41 @@
 {
   "ansible.ansibleLint.enabled": true,
+  "ansible.validation.lint.enabled": true,
+  "ansible.lightspeed.enabled": true,
+  "ansible.lightspeed.suggestions.enabled": true,
   "ansible.python.interpreterPath": "python3",
+  "ansible.executionEnvironment.enabled": false,
+
   "files.associations": {
     "*.yml": "ansible",
     "*.yaml": "ansible",
     "hosts": "ini"
   },
-  "editor.formatOnSave": true
+
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": ".github/copilot-instructions.md"
+    }
+  ],
+
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json": [
+      "playbooks/*.yml",
+      "playbooks/*.yaml",
+      "roles/*/tasks/*.yml",
+      "roles/*/tasks/*.yaml",
+      "roles/*/handlers/*.yml",
+      "roles/*/handlers/*.yaml",
+      "examples/*.yml",
+      "examples/*.yaml"
+    ],
+    "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/master/schema/latest/as3-schema.json": [
+      "*as3*.json",
+      "*as3*.yml"
+    ]
+  },
+
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true
 }

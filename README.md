@@ -1,152 +1,115 @@
 # 🛡️ Ansible-Quak: Enterprise Anti-Hallucination Ansible Framework
 
 > **Production-Grade Ansible Automation for Enterprise Network, Cloud & Security Engineering.**  
-> Pre-configured with **GitHub Copilot Skills, Custom Instructions, AST-based FQCN Validation, and CI/CD Gates** to eliminate AI hallucinations across **Akamai CDN, F5 BIG-IP, Zscaler Zero Trust, Jira ITSM, AWS, Azure, and GCP**.
+> Powered by **VS Code Copilot Prompt Agents, AST Schema Validation, CLI Scaffolding Agents, and CI/CD Gates** to permanently eliminate AI hallucinations across **F5 BIG-IP, Akamai CDN, Zscaler Zero Trust, Jira ITSM, AWS, Azure, and GCP**.
 
 ---
 
-## 🎯 Purpose & Architecture
+## 🎯 The Core Problem & The Solution
 
-When writing complex enterprise Ansible playbooks with GitHub Copilot or LLM agents, models frequently hallucinate:
-- Invented module names (e.g., `akamai_purge`, `bigip_pool`, `jira_ticket`)
-- Fake parameters and invalid state options
-- Missing Fully Qualified Collection Names (FQCN)
-- Deprecated loops (`with_items:`) and syntax (`{{ }}` inside `when:`)
+In enterprise automation, AI assistants (GitHub Copilot, ChatGPT, Claude) frequently hallucinate:
+- **Invented module names** (`akamai_purge`, `bigip_pool`, `jira_ticket`)
+- **Invalid parameter names** (`action: create` instead of `operation: create`, `state: offline` instead of `disabled`)
+- **Missing FQCNs** (`copy` instead of `ansible.builtin.copy`)
+- **Jinja2 syntax errors** (`when: "{{ my_var == true }}"`)
+- **Unmasked credentials** (exposing API keys in debug/playbook logs)
 
-**Ansible-Quak** solves this through a **5-Layer Defense Architecture**:
-
-```mermaid
-flowchart TD
-    A["🧑‍💻 Developer Prompt / Copilot Chat"] --> B["📋 Copilot Instructions\n.github/copilot-instructions.md"]
-    B --> C["🤖 Specialized Agent Skills\n.github/skills/ (15 Skills)"]
-    C --> D["🔌 Real-Time MCP Docs Server\nmcp-server/ (Queries ansible-doc)"]
-    D --> E["🔍 AST-Based Local Validation\nscripts/check-fqcn.sh & validate.sh"]
-    E --> F["🚀 CI/CD Automated Enforcement\n.github/workflows/ansible-ci.yml"]
-    F --> G["✅ Verified, Idempotent Ansible Code"]
-
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#fff3e0
-    style D fill:#f3e5f5
-    style E fill:#e8f5e9
-    style F fill:#e8f5e9
-    style G fill:#c8e6c9
-```
+**Ansible-Quak** solves this with a **Dual-Agent Architecture**:
+1. **Interactive Prompt Agents in VS Code Copilot Chat** (`.github/prompts/*.prompt.md`)
+2. **Local Python AST Agent & Auditor** (`scripts/ansible_agent.py`)
 
 ---
 
-## 🏢 Enterprise Technologies Covered
+## 🤖 7 Specialized VS Code Copilot Agents (`.github/prompts/`)
 
-| Domain | Collections | Key Capabilities & Modules |
+When using **GitHub Copilot Chat in VS Code**, select these agents directly using `/` or attach them to your prompt:
+
+| Agent Prompt File | Shortcut | Purpose & Guardrails |
 |---|---|---|
-| **Akamai CDN & DNS** | `akamai.edgegrid` | Fast Purge (CCU v3 via `cache_purge`), Edge DNS (`dns_record`), Property Manager (`property_activation`) |
-| **F5 BIG-IP ADC** | `f5networks.f5_modules` | Declarative AS3 (`bigip_as3_deploy`), Maintenance Drain (`bigip_pool_member`), VIPs (`bigip_virtual_server`), SSL certs |
-| **Zscaler Cloud Security**| `zscaler.ziacloud`<br>`zscaler.zpacloud` | ZIA URL filtering (`zia_url_categories`, `zia_url_filtering_rules`), ZPA App Segments (`zpa_application_segment`, `zpa_server_group`) |
-| **Jira ITSM & Change** | `community.general` | Change ticket creation, approval status gating, audit comments, state transitions (`community.general.jira`) |
-| **Amazon Web Services** | `amazon.aws` | EC2 instances (`ec2_instance`), S3 storage, Route53 DNS, IAM roles, VPC transit gateways |
-| **Microsoft Azure** | `azure.azcollection` | Virtual Machines (`azure_rm_virtualmachine`), Virtual Networks (`azure_rm_virtualnetwork`), NSGs |
-| **Google Cloud (GCP)** | `google.cloud` | Compute Engine (`gcp_compute_instance`), Cloud DNS, Cloud Storage buckets |
-| **Linux & Core Systems** | `ansible.builtin`<br>`ansible.posix` | Package management (`apt`, `dnf`), Systemd services, Firewalld, Sysctl kernel tuning, SSH hardening |
+| **[`f5-bigip.prompt.md`](.github/prompts/f5-bigip.prompt.md)** | `/f5-bigip` | F5 BIG-IP LTM/DNS, Declarative AS3, Graceful Pool Drain (`state: disabled`), VIPs, SSL Certs, HA Sync |
+| **[`akamai.prompt.md`](.github/prompts/akamai.prompt.md)** | `/akamai` | Akamai Fast Purge CCU v3 (URL/CPCode/Tag), Edge DNS (trailing dots on CNAMEs), Property Manager (PAPI) |
+| **[`zscaler.prompt.md`](.github/prompts/zscaler.prompt.md)** | `/zscaler` | Zero Trust Security: Separates ZIA (`zscaler.ziacloud`) and ZPA (`zscaler.zpacloud`), URL categories, App Segments |
+| **[`jira.prompt.md`](.github/prompts/jira.prompt.md)** | `/jira` | ITSM Change Management: Ticket creation, CAB Approval Gates, Progress Logging, and Rescue Rollback |
+| **[`cloud.prompt.md`](.github/prompts/cloud.prompt.md)** | `/cloud` | Multi-Cloud: AWS (`amazon.aws`), Azure (`azure.azcollection`), GCP (`google.cloud`) with Transit Gateways |
+| **[`audit-playbook.prompt.md`](.github/prompts/audit-playbook.prompt.md)** | `/audit-playbook` | Audits any playbook/role for bare modules, parameter typos, missing `no_log`, and idempotency defects |
+| **[`playbook-architect.prompt.md`](.github/prompts/playbook-architect.prompt.md)** | `/playbook-architect` | End-to-end multi-vendor orchestrations connecting Jira + F5 + Zscaler + Akamai + Cloud |
 
 ---
 
-## 🤖 GitHub Agent Skills Reference (`.github/skills/`)
+## ⚡ Interactive Local CLI Agent (`scripts/ansible_agent.py`)
 
-Copilot Agent Mode automatically matches and loads these skills based on your prompt:
+Run the local AI agent directly from your terminal to scaffold production tasks or audit playbooks in seconds:
 
-1. **`ansible-akamai`**: Fast Purge, Edge DNS zones, Property Manager PAPI, and `.edgerc` authentication.
-2. **`ansible-f5-bigip`**: F5 ADC automation, AS3 declarations, pool member drain/maintenance, and SSL renewals.
-3. **`ansible-zscaler`**: ZIA URL filtering, ZPA Zero Trust App Segments, connector groups, and activation steps.
-4. **`ansible-jira`**: ITSM change management workflows, ticket creation, approval gates, and block/rescue error handling.
-5. **`ansible-multi-cloud`**: AWS, Azure, and GCP compute and networking orchestration.
-6. **`ansible-playbook`**: Master playbook authoring skill with decision trees and pre-flight asserts.
-7. **`ansible-role`**: Galaxy directory standard, 22-level variable precedence, and Molecule testing.
-8. **`ansible-jinja2`**: Complete Jinja2 filter whitelist, loop scopes, and avoidance of hallucinated filters.
-9. **`ansible-security-hardening`**: CIS benchmark automation, SSH hardening, auditd, and kernel sysctl tuning.
-10. **`ansible-linux-admin`**: Daily sysadmin tasks (users, groups, systemd units, storage, cron/timers).
-11. **`ansible-vault`**: Zero-leakage secrets management, inline encryption (`!vault`), and `no_log: true`.
-12. **`ansible-performance`**: Strategies (`free`, `linear`), async polling, SSH pipelining, and forks tuning.
-13. **`ansible-containers`**: Docker containers (`community.docker`), Compose v2, and Kubernetes (`kubernetes.core`).
-14. **`ansible-troubleshoot`**: Systematic debugging flowchart, verbosity levels, and common error resolution.
-15. **`ansible-ci-cd-deployment`**: Rolling updates (`serial:`), canary releases, and zero-downtime deployments.
+```bash
+# 1. List all available verified task templates
+./scripts/ansible_agent.py list
 
----
+# 2. Scaffold a graceful F5 pool member drain task
+./scripts/ansible_agent.py scaffold --type f5 --action drain
 
-## 📁 Repository Structure
+# 3. Scaffold an Akamai Fast Purge task
+./scripts/ansible_agent.py scaffold --type akamai --action purge
 
-```text
-.
-├── .github/
-│   ├── copilot-instructions.md      # Auto-loaded Copilot rules & anti-hallucination matrix
-│   ├── mcp.json                     # MCP server definition for real-time ansible-doc tool calls
-│   ├── skills/                      # 15 Comprehensive GitHub Agent Skills
-│   │   ├── ansible-akamai/          # Akamai Fast Purge & DNS automation
-│   │   ├── ansible-f5-bigip/        # F5 ADC, AS3 & Pool Member drain
-│   │   ├── ansible-zscaler/         # ZIA & ZPA Zero Trust automation
-│   │   ├── ansible-jira/            # Jira ITSM ticket lifecycle & approval gate
-│   │   ├── ansible-multi-cloud/     # AWS, Azure & GCP provisioning
-│   │   └── ...                      # Playbooks, Roles, Linux, Security, etc.
-│   └── workflows/
-│       ├── ansible-ci.yml           # CI validation pipeline (Lint, Syntax, FQCN, Modules)
-│       └── auto-fix.yml             # Automatic lint suggestions
-├── inventories/
-│   └── dev/
-│       ├── hosts.yml                # Environment host inventory
-│       └── group_vars/all.yml       # F5, Akamai, Zscaler, Jira & Cloud provider configurations
-├── playbooks/
-│   ├── site.yml                     # Master execution playbook
-│   ├── webserver.yml                # Sample application playbook
-│   └── enterprise_edge_datacenter_orchestration.yml  # Full Jira + F5 + Zscaler + Akamai pipeline
-├── examples/
-│   ├── f5-as3-declaration.yml       # F5 AS3 Declarative App deployment
-│   ├── akamai-purge-dns.yml         # Akamai Fast Purge and Edge DNS CNAME
-│   ├── zscaler-security-policy.yml  # ZIA URL filtering and ZPA App Segments
-│   ├── jira-change-management.yml   # Jira change ticket lifecycle
-│   ├── gold-standard-tasks.yml      # 10 Reference system administration tasks
-│   └── gold-standard-role/          # Complete enterprise role with Molecule tests
-├── scripts/
-│   ├── check-fqcn.sh                # Shell launcher for FQCN verification
-│   ├── check-fqcn.py                # AST-based Python scanner for non-FQCN modules
-│   ├── verify-modules.sh           # Verifies all FQCN modules exist via ansible-doc
-│   └── validate.sh                  # Complete 6-stage validation suite
-├── mcp-server/
-│   ├── ansible-docs-server.py       # Custom Model Context Protocol (MCP) server
-│   └── requirements.txt             # MCP server dependencies
-├── ansible.cfg                      # Tuned configuration (YAML callback, pipelining, smart facts)
-├── requirements.yml                 # Pinned enterprise collections
-├── Makefile                         # Unified dev commands
-└── README.md
+# 4. Scaffold a Zscaler ZPA Application Segment task
+./scripts/ansible_agent.py scaffold --type zscaler --action zpa-segment
+
+# 5. Scaffold a Jira Change Request & CAB Approval Gate
+./scripts/ansible_agent.py scaffold --type jira --action change-gate
+
+# 6. Audit ANY playbook in your repository for hallucinations & syntax defects
+./scripts/ansible_agent.py audit playbooks/enterprise_edge_datacenter_orchestration.yml
 ```
 
 ---
 
-## ⚡ Quick Start & Verification
+## 🏗️ 4 Enterprise Production Roles in `roles/`
 
-### 1. Install Dependencies & Collections
-```bash
-make install
-```
+Pre-built, modular enterprise roles that serve as **few-shot context** for GitHub Copilot:
 
-### 2. Run AST FQCN Verification
-```bash
-./scripts/check-fqcn.sh
-```
+- **[`roles/f5_bigip_maintenance/`](roles/f5_bigip_maintenance)**: Takes UCS backup, gracefully drains pool members, re-enables members, and triggers HA config-sync.
+- **[`roles/akamai_edge_operations/`](roles/akamai_edge_operations)**: Executes Fast Purge (url, cpcode, tag) and configures Edge DNS records.
+- **[`roles/zscaler_policy_manager/`](roles/zscaler_policy_manager)**: Manages ZIA URL categories, commits policy activations, and provisions ZPA Application Segments.
+- **[`roles/jira_itsm_lifecycle/`](roles/jira_itsm_lifecycle)**: Creates change tickets, gates execution on CAB approval, posts milestone comments, and transitions statuses.
 
-### 3. Run Full Test Suite
+---
+
+## ⌨️ VS Code Snippets (`.vscode/ansible.code-snippets`)
+
+Type these prefixes in any `.yml` file in VS Code for instant, non-hallucinated completions:
+- `f5-drain` ➔ F5 Graceful Pool Member Drain
+- `f5-enable` ➔ F5 Pool Member Enable
+- `f5-as3` ➔ F5 Declarative AS3 Application Deployment
+- `akamai-purge` ➔ Akamai Fast Purge CCU v3
+- `akamai-dns` ➔ Akamai Edge DNS Record
+- `zscaler-zia-url` ➔ ZIA Custom URL Category & Activation
+- `zscaler-zpa-segment` ➔ ZPA Zero Trust Application Segment
+- `jira-ticket` ➔ Jira ITSM Change Ticket
+- `jira-transition` ➔ Jira Status Transition
+- `aws-ec2` ➔ AWS EC2 Instance Deployment
+
+---
+
+## 🔍 Validation Suite & Makefile Commands
+
 ```bash
+# Run AST-based FQCN anti-hallucination scan
+make fqcn-check
+
+# Run AI Agent AST audit across all playbooks
+make agent-audit
+
+# Run full multi-stage validation
 make validate
 ```
 
 ---
 
-## 🚀 Push to GitHub (`Ansible-Quak`)
-
-This repository is pre-configured with remote `origin` pointing to `https://github.com/lavkushry/Ansible-Quak.git`:
+## 🚀 Push to GitHub
 
 ```bash
 git add .
-git commit -m "feat: complete enterprise anti-hallucination ansible framework for akamai, f5, zscaler, jira, and multi-cloud"
-git push -u origin main
+git commit -m "feat: complete enterprise prompt agents, CLI assistant, and VS Code integration"
+git push origin main
 ```
 
 ---
