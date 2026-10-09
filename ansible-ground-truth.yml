@@ -1,0 +1,363 @@
+---
+# ==============================================================================
+# ANSIBLE GROUND TRUTH: CANONICAL PRODUCTION TASK REFERENCE
+# ==============================================================================
+# INSTRUCTION FOR DEVELOPER:
+# Keep this file OPEN in a tab in VS Code while writing Ansible!
+# GitHub Copilot reads open tabs as its primary context. Having this file
+# open prevents 99% of inline hallucinations for F5, Akamai, Zscaler, Jira & Cloud.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. F5 BIG-IP ADC (f5networks.f5_modules)
+# ------------------------------------------------------------------------------
+
+# 1.1 F5 Pool Member Graceful Drain (Maintenance Window)
+- name: Drain F5 Pool Member Gracefully
+  f5networks.f5_modules.bigip_pool_member:
+    provider: "{{ f5_provider }}"
+    pool: "app_http_pool"
+    partition: "Common"
+    name: "10.100.20.11:8080"
+    state: "disabled"   # NOTE: Use 'disabled' for drain, NOT 'offline' or 'forced_offline'
+  delegate_to: localhost
+  tags: ['f5', 'drain']
+
+# 1.2 F5 Pool Member Re-Enable
+- name: Re-Enable F5 Pool Member Post-Maintenance
+  f5networks.f5_modules.bigip_pool_member:
+    provider: "{{ f5_provider }}"
+    pool: "app_http_pool"
+    partition: "Common"
+    name: "10.100.20.11:8080"
+    state: "enabled"
+  delegate_to: localhost
+  tags: ['f5', 'enable']
+
+# 1.3 F5 LTM Virtual Server (VIP) with Client-SSL Profile
+- name: Ensure HTTPS Virtual Server is Configured
+  f5networks.f5_modules.bigip_virtual_server:
+    provider: "{{ f5_provider }}"
+    name: "vs_app_https"
+    destination: "10.100.20.50"
+    port: 443
+    pool: "app_http_pool"
+    profiles:
+      - "/Common/tcp"
+      - "/Common/http"
+      - "/Common/app_client_ssl_profile"
+    snat: "Automap"
+    state: present
+    partition: "Common"
+  delegate_to: localhost
+  tags: ['f5', 'vip']
+
+# 1.4 F5 Load Balancing Pool with HTTP Monitor
+- name: Create F5 Pool with Health Monitor
+  f5networks.f5_modules.bigip_pool:
+    provider: "{{ f5_provider }}"
+    name: "app_http_pool"
+    lb_method: "round-robin"
+    monitors:
+      - "/Common/http"
+    partition: "Common"
+    state: present
+  delegate_to: localhost
+  tags: ['f5', 'pool']
+
+# 1.5 F5 Pre-Change UCS Configuration Backup
+- name: Take Pre-Change F5 UCS Backup
+  f5networks.f5_modules.bigip_ucs:
+    provider: "{{ f5_provider }}"
+    ucs: "pre_change_backup.ucs"
+    state: present
+  delegate_to: localhost
+  tags: ['f5', 'backup']
+
+# 1.6 F5 HA Config-Sync
+- name: Sync Active Configuration across F5 HA Cluster
+  f5networks.f5_modules.bigip_configsync_action:
+    provider: "{{ f5_provider }}"
+    device_group: "SyncFailoverGroup"
+    sync_device_to_group: true
+  delegate_to: localhost
+  tags: ['f5', 'sync']
+
+# 1.7 F5 Declarative AS3 Application Deployment
+- name: Deploy L4-L7 Application Service via AS3
+  f5networks.f5_modules.bigip_as3_deploy:
+    provider: "{{ f5_provider }}"
+    content: "{{ lookup('ansible.builtin.template', 'as3_app.json.j2') }}"
+    tenant: "Sample_Tenant"
+  delegate_to: localhost
+  tags: ['f5', 'as3']
+
+# ------------------------------------------------------------------------------
+# 2. AKAMAI EDGEGRID (akamai.edgegrid)
+# ------------------------------------------------------------------------------
+
+# 2.1 Fast Purge CCU v3 by URL (Invalidate Cache)
+- name: Fast Purge Akamai Edge Cache by URL
+  akamai.edgegrid.cache_purge:
+    hostname: "{{ vault_akamai_host }}"
+    client_token: "{{ vault_akamai_client_token }}"
+    client_secret: "{{ vault_akamai_client_secret }}"
+    access_token: "{{ vault_akamai_access_token }}"
+    network: "staging"       # staging or production
+    purge_type: "url"        # url, cpcode, or tag
+    action: "invalidate"     # invalidate (soft) or delete (hard)
+    objects:
+      - "https://www.example.com/assets/app.js"
+      - "https://www.example.com/assets/style.css"
+  delegate_to: localhost
+  no_log: true
+  tags: ['akamai', 'purge']
+
+# 2.2 Fast Purge by CP Code
+- name: Fast Purge Akamai Edge Cache by CP Code
+  akamai.edgegrid.cache_purge:
+    hostname: "{{ vault_akamai_host }}"
+    client_token: "{{ vault_akamai_client_token }}"
+    client_secret: "{{ vault_akamai_client_secret }}"
+    access_token: "{{ vault_akamai_access_token }}"
+    network: "production"
+    purge_type: "cpcode"
+    action: "invalidate"
+    objects:
+      - "123456"
+  delegate_to: localhost
+  no_log: true
+  tags: ['akamai', 'purge']
+
+# 2.3 Edge DNS CNAME Record (Notice the trailing dot!)
+- name: Ensure Edge DNS CNAME Record Points to Edge Hostname
+  akamai.edgegrid.dns_record:
+    hostname: "{{ vault_akamai_host }}"
+    client_token: "{{ vault_akamai_client_token }}"
+    client_secret: "{{ vault_akamai_client_secret }}"
+    access_token: "{{ vault_akamai_access_token }}"
+    zone: "example.com"
+    name: "shop.example.com"
+    type: "CNAME"
+    target: ["shop.example.com.edgekey.net."]   # MUST be a list with trailing dot
+    ttl: 300
+    state: present
+    active: true
+  delegate_to: localhost
+  no_log: true
+  tags: ['akamai', 'dns']
+
+# 2.4 Property Manager (PAPI) Activation
+- name: Activate Property Configuration on Staging Network
+  akamai.edgegrid.property_activation:
+    edgerc: "~/.edgerc"
+    section: "default"
+    property_name: "www.example.com"
+    version: "{{ property_version }}"
+    network: "STAGING"
+    note: "Automated deployment pipeline activation"
+    notify_emails:
+      - "devops-alerts@example.com"
+  delegate_to: localhost
+  tags: ['akamai', 'papi']
+
+# ------------------------------------------------------------------------------
+# 3. ZSCALER CLOUD SECURITY (zscaler.ziacloud & zscaler.zpacloud)
+# ------------------------------------------------------------------------------
+
+# 3.1 ZIA: Custom URL Category Whitelisting
+- name: Configure Approved Partner Domains in ZIA
+  zscaler.ziacloud.zia_url_categories:
+    provider:
+      username: "{{ vault_zia_username }}"
+      password: "{{ vault_zia_password }}"
+      api_key: "{{ vault_zia_api_key }}"
+      cloud: "{{ vault_zia_cloud | default('zscaler.net') }}"
+    configured_name: "Corporate_Allowed_APIs"
+    super_category: "USER_DEFINED"
+    urls:
+      - "api.partner-services.io"
+      - "auth.identity-provider.com"
+    state: present
+  delegate_to: localhost
+  no_log: true
+  tags: ['zscaler', 'zia']
+
+# 3.2 ZIA: Activate Committed Policy Changes (MANDATORY IN ZIA)
+- name: Commit and Activate Staged Changes in ZIA
+  zscaler.ziacloud.zia_activation:
+    provider:
+      username: "{{ vault_zia_username }}"
+      password: "{{ vault_zia_password }}"
+      api_key: "{{ vault_zia_api_key }}"
+      cloud: "{{ vault_zia_cloud | default('zscaler.net') }}"
+  delegate_to: localhost
+  no_log: true
+  tags: ['zscaler', 'activate']
+
+# 3.3 ZPA: Application Segment for Zero Trust Network Access
+- name: Provision ZPA Application Segment
+  zscaler.zpacloud.zpa_application_segment:
+    client_id: "{{ vault_zpa_client_id }}"
+    client_secret: "{{ vault_zpa_client_secret }}"
+    customer_id: "{{ vault_zpa_customer_id }}"
+    name: "Internal_Monitoring_Dashboards"
+    domain_names:
+      - "grafana.corp.internal"
+      - "prometheus.corp.internal"
+    segment_group_id: "{{ zpa_monitoring_segment_group_id }}"
+    server_groups:
+      - id: "{{ zpa_monitoring_server_group_id }}"
+    tcp_port_ranges:
+      - "443"
+      - "9090"
+    is_cname_enabled: true
+    enabled: true
+  delegate_to: localhost
+  no_log: true
+  tags: ['zscaler', 'zpa']
+
+# ------------------------------------------------------------------------------
+# 4. JIRA ITSM & CHANGE MANAGEMENT (community.general.jira)
+# ------------------------------------------------------------------------------
+
+# 4.1 Create Jira Change Request Ticket
+- name: Create Change Request in Jira
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    project: "OPS"
+    issuetype: "Change Request"
+    summary: "[AUTOMATION] Scheduled Infrastructure Maintenance"
+    description: "Automated change window executed by Ansible."
+    operation: create        # NOTE: 'operation', NOT 'action'
+  register: new_jira_ticket
+  delegate_to: localhost
+  no_log: true
+  tags: ['jira']
+
+# 4.2 Gate Playbook on CAB Approval Status
+- name: Verify Change Ticket is Approved Before Running
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    issue: "{{ active_ticket_key }}"
+    operation: fetch
+  register: ticket_status_check
+  delegate_to: localhost
+  no_log: true
+  tags: ['jira']
+
+- name: Assert Approval Status
+  ansible.builtin.assert:
+    that:
+      - ticket_status_check.meta.fields.status.name in ['Approved', 'In Progress', 'Ready for Implementation']
+    fail_msg: "ABORT: Ticket {{ active_ticket_key }} is not in an approved status."
+  tags: ['jira']
+
+# 4.3 Add Progress Comment to Jira
+- name: Post Milestone Comment to Jira
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    issue: "{{ active_ticket_key }}"
+    operation: comment
+    comment: "Milestone: All F5 pool members drained successfully."
+  delegate_to: localhost
+  no_log: true
+  tags: ['jira']
+
+# 4.4 Transition Jira Ticket to Resolved
+- name: Transition Jira Issue to Resolved
+  community.general.jira:
+    uri: "{{ vault_jira_url }}"
+    username: "{{ vault_jira_username }}"
+    password: "{{ vault_jira_token }}"
+    issue: "{{ active_ticket_key }}"
+    operation: transition
+    status: "Resolved"
+    comment: "All tasks completed and verified with zero errors."
+  delegate_to: localhost
+  no_log: true
+  tags: ['jira']
+
+# ------------------------------------------------------------------------------
+# 5. MULTI-CLOUD SERVICES (amazon.aws, azure.azcollection, google.cloud)
+# ------------------------------------------------------------------------------
+
+# 5.1 AWS EC2 Instance Deployment
+- name: Deploy Production AWS EC2 Instance
+  amazon.aws.ec2_instance:
+    name: "prod-web-01"
+    image_id: "ami-0c55b159cbfafe1f0"
+    instance_type: "t3.medium"
+    key_name: "prod-key"
+    vpc_subnet_id: "{{ subnet_id }}"
+    security_group: "{{ sg_id }}"
+    network:
+      assign_public_ip: false
+    tags:
+      Environment: "Production"
+      ManagedBy: "Ansible"
+    wait: true
+    state: running
+  delegate_to: localhost
+  tags: ['aws', 'ec2']
+
+# 5.2 AWS Route53 Public/Private DNS Record
+- name: Ensure Public Route53 CNAME points to ALB
+  amazon.aws.route53:
+    state: present
+    zone: "example.com"
+    record: "app.example.com"
+    type: CNAME
+    ttl: 300
+    value: "app-prod-alb-123456.us-east-1.elb.amazonaws.com"
+    overwrite: true
+  delegate_to: localhost
+  tags: ['aws', 'dns']
+
+# 5.3 Azure Linux Virtual Machine
+- name: Deploy Azure Linux Virtual Machine
+  azure.azcollection.azure_rm_virtualmachine:
+    resource_group: "{{ azure_resource_group }}"
+    name: "vm-app-prod-01"
+    vm_size: "Standard_D2s_v5"
+    admin_username: "azureuser"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/azureuser/.ssh/authorized_keys"
+        key_data: "{{ vault_ssh_public_key }}"
+    image:
+      offer: "0001-com-ubuntu-server-jammy"
+      publisher: "Canonical"
+      sku: "22_04-lts-gen2"
+      version: "latest"
+  delegate_to: localhost
+  tags: ['azure', 'vm']
+
+# 5.4 Google Cloud Compute Engine Instance
+- name: Create GCP Compute Engine Instance
+  google.cloud.gcp_compute_instance:
+    name: "gcp-app-node-01"
+    machine_type: "n2-standard-2"
+    zone: "us-central1-a"
+    project: "{{ gcp_project_id }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ gcp_sa_key_file }}"
+    disks:
+      - auto_delete: true
+        boot: true
+        initialize_params:
+          source_image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
+    network_interfaces:
+      - network:
+          selfLink: "global/networks/vpc-prod"
+        subnetwork:
+          selfLink: "regions/us-central1/subnetworks/subnet-apps"
+    state: present
+  delegate_to: localhost
+  tags: ['gcp', 'compute']

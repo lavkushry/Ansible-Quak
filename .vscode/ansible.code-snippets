@@ -1,6 +1,7 @@
 {
   "F5 Pool Member Drain": {
-    "prefix": ["f5-drain", "ansible-f5-drain"],
+    "scope": "ansible,yaml",
+    "prefix": ["f5-drain", "f5", "bigip-drain"],
     "body": [
       "- name: Drain F5 Pool Member for Maintenance",
       "  f5networks.f5_modules.bigip_pool_member:",
@@ -12,10 +13,11 @@
       "  delegate_to: localhost",
       "  tags: ['f5', 'drain']"
     ],
-    "description": "F5 BIG-IP pool member graceful connection drain"
+    "description": "F5 BIG-IP pool member graceful connection drain (state: disabled)"
   },
   "F5 Pool Member Enable": {
-    "prefix": ["f5-enable", "ansible-f5-enable"],
+    "scope": "ansible,yaml",
+    "prefix": ["f5-enable", "bigip-enable"],
     "body": [
       "- name: Enable F5 Pool Member",
       "  f5networks.f5_modules.bigip_pool_member:",
@@ -27,10 +29,34 @@
       "  delegate_to: localhost",
       "  tags: ['f5', 'enable']"
     ],
-    "description": "F5 BIG-IP pool member enable"
+    "description": "F5 BIG-IP pool member re-enable"
+  },
+  "F5 Virtual Server (VIP)": {
+    "scope": "ansible,yaml",
+    "prefix": ["f5-vip", "f5-virtual-server"],
+    "body": [
+      "- name: Configure HTTPS Virtual Server",
+      "  f5networks.f5_modules.bigip_virtual_server:",
+      "    provider: \"{{ f5_provider }}\"",
+      "    name: \"vs_${1:app_name}_https\"",
+      "    destination: \"${2:10.100.20.50}\"",
+      "    port: 443",
+      "    pool: \"${3:app_http_pool}\"",
+      "    profiles:",
+      "      - \"/Common/tcp\"",
+      "      - \"/Common/http\"",
+      "      - \"/Common/clientssl_${1:app_name}\"",
+      "    snat: \"Automap\"",
+      "    state: present",
+      "    partition: \"${4:Common}\"",
+      "  delegate_to: localhost",
+      "  tags: ['f5', 'vip']"
+    ],
+    "description": "F5 BIG-IP Virtual Server configuration"
   },
   "F5 AS3 Deploy": {
-    "prefix": ["f5-as3", "ansible-f5-as3"],
+    "scope": "ansible,yaml",
+    "prefix": ["f5-as3", "as3-deploy"],
     "body": [
       "- name: Deploy F5 Application via AS3 Declaration",
       "  f5networks.f5_modules.bigip_as3_deploy:",
@@ -42,8 +68,23 @@
     ],
     "description": "F5 BIG-IP Declarative AS3 deployment"
   },
+  "F5 Pre-Change UCS Backup": {
+    "scope": "ansible,yaml",
+    "prefix": ["f5-ucs", "f5-backup"],
+    "body": [
+      "- name: Take Pre-Change F5 UCS Backup",
+      "  f5networks.f5_modules.bigip_ucs:",
+      "    provider: \"{{ f5_provider }}\"",
+      "    ucs: \"backup_pre_change_{{ ansible_date_time.iso8601_basic_short }}.ucs\"",
+      "    state: present",
+      "  delegate_to: localhost",
+      "  tags: ['f5', 'backup']"
+    ],
+    "description": "F5 BIG-IP UCS Configuration Backup"
+  },
   "Akamai Fast Purge": {
-    "prefix": ["akamai-purge", "ansible-akamai-purge"],
+    "scope": "ansible,yaml",
+    "prefix": ["akamai-purge", "akamai", "fast-purge"],
     "body": [
       "- name: Fast Purge Akamai Edge Cache",
       "  akamai.edgegrid.cache_purge:",
@@ -55,15 +96,16 @@
       "    purge_type: \"${2|url,cpcode,tag|}\"",
       "    action: \"${3|invalidate,delete|}\"",
       "    objects:",
-      "      - \"${4:https://www.example.com/index.html}\"",
+      "      - \"${4:https://www.example.com/assets/app.js}\"",
       "  delegate_to: localhost",
       "  no_log: true",
       "  tags: ['akamai', 'purge']"
     ],
-    "description": "Akamai Fast Purge CCU v3"
+    "description": "Akamai Fast Purge CCU v3 (url/cpcode/tag)"
   },
-  "Akamai Edge DNS": {
-    "prefix": ["akamai-dns", "ansible-akamai-dns"],
+  "Akamai Edge DNS Record": {
+    "scope": "ansible,yaml",
+    "prefix": ["akamai-dns", "edge-dns"],
     "body": [
       "- name: Manage Akamai Edge DNS Record",
       "  akamai.edgegrid.dns_record:",
@@ -85,7 +127,8 @@
     "description": "Akamai Edge DNS Record management"
   },
   "Zscaler ZIA URL Category": {
-    "prefix": ["zscaler-zia-url", "zia-url"],
+    "scope": "ansible,yaml",
+    "prefix": ["zscaler-zia", "zia-url", "zscaler"],
     "body": [
       "- name: Configure ZIA Custom URL Category",
       "  zscaler.ziacloud.zia_url_categories:",
@@ -94,19 +137,31 @@
       "      password: \"{{ vault_zia_password }}\"",
       "      api_key: \"{{ vault_zia_api_key }}\"",
       "      cloud: \"{{ vault_zia_cloud }}\"",
-      "    configured_name: \"${1:Approved_Partner_APIs}\"",
+      "    configured_name: \"${1:Corporate_Allowed_APIs}\"",
       "    super_category: \"USER_DEFINED\"",
       "    urls:",
-      "      - \"${2:partner-api.vendor.com}\"",
+      "      - \"${2:api.partner-services.io}\"",
       "    state: present",
       "  delegate_to: localhost",
       "  no_log: true",
-      "  tags: ['zscaler', 'zia']"
+      "  tags: ['zscaler', 'zia']",
+      "",
+      "- name: Activate Policy Changes in ZIA",
+      "  zscaler.ziacloud.zia_activation:",
+      "    provider:",
+      "      username: \"{{ vault_zia_username }}\"",
+      "      password: \"{{ vault_zia_password }}\"",
+      "      api_key: \"{{ vault_zia_api_key }}\"",
+      "      cloud: \"{{ vault_zia_cloud }}\"",
+      "  delegate_to: localhost",
+      "  no_log: true",
+      "  tags: ['zscaler', 'activate']"
     ],
-    "description": "Zscaler ZIA URL category configuration"
+    "description": "Zscaler ZIA URL category configuration & activation"
   },
-  "Zscaler ZPA App Segment": {
-    "prefix": ["zscaler-zpa-segment", "zpa-segment"],
+  "Zscaler ZPA Application Segment": {
+    "scope": "ansible,yaml",
+    "prefix": ["zscaler-zpa", "zpa-segment", "zpa"],
     "body": [
       "- name: Ensure ZPA Application Segment Exists",
       "  zscaler.zpacloud.zpa_application_segment:",
@@ -129,7 +184,8 @@
     "description": "Zscaler ZPA Zero Trust application segment"
   },
   "Jira Change Ticket": {
-    "prefix": ["jira-ticket", "ansible-jira-change"],
+    "scope": "ansible,yaml",
+    "prefix": ["jira-ticket", "jira", "change-request"],
     "body": [
       "- name: Create Jira Change Ticket for Maintenance",
       "  community.general.jira:",
@@ -149,7 +205,8 @@
     "description": "Jira ITSM Change ticket creation"
   },
   "Jira Transition": {
-    "prefix": ["jira-transition", "ansible-jira-close"],
+    "scope": "ansible,yaml",
+    "prefix": ["jira-transition", "jira-close"],
     "body": [
       "- name: Transition Jira Ticket Status",
       "  community.general.jira:",
@@ -167,11 +224,12 @@
     "description": "Jira issue status transition"
   },
   "AWS EC2 Instance": {
-    "prefix": ["aws-ec2", "ansible-ec2"],
+    "scope": "ansible,yaml",
+    "prefix": ["aws-ec2", "aws", "ec2"],
     "body": [
-      "- name: Launch AWS EC2 Instance",
+      "- name: Deploy Production AWS EC2 Instance",
       "  amazon.aws.ec2_instance:",
-      "    name: \"${1:web-prod-node}\"",
+      "    name: \"${1:prod-web-node}\"",
       "    image_id: \"${2:ami-0c55b159cbfafe1f0}\"",
       "    instance_type: \"${3:t3.medium}\"",
       "    key_name: \"${4:deployer-key}\"",
@@ -186,5 +244,29 @@
       "  tags: ['aws', 'ec2']"
     ],
     "description": "AWS EC2 instance deployment"
+  },
+  "Azure Virtual Machine": {
+    "scope": "ansible,yaml",
+    "prefix": ["azure-vm", "azure"],
+    "body": [
+      "- name: Deploy Azure Linux Virtual Machine",
+      "  azure.azcollection.azure_rm_virtualmachine:",
+      "    resource_group: \"{{ ${1:azure_resource_group} }}\"",
+      "    name: \"${2:vm-app-prod-01}\"",
+      "    vm_size: \"Standard_D2s_v5\"",
+      "    admin_username: \"azureuser\"",
+      "    ssh_password_enabled: false",
+      "    ssh_public_keys:",
+      "      - path: \"/home/azureuser/.ssh/authorized_keys\"",
+      "        key_data: \"{{ vault_ssh_public_key }}\"",
+      "    image:",
+      "      offer: \"0001-com-ubuntu-server-jammy\"",
+      "      publisher: \"Canonical\"",
+      "      sku: \"22_04-lts-gen2\"",
+      "      version: \"latest\"",
+      "  delegate_to: localhost",
+      "  tags: ['azure', 'vm']"
+    ],
+    "description": "Azure Linux Virtual Machine deployment"
   }
 }
