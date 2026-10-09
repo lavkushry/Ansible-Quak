@@ -3,6 +3,13 @@
 > CRITICAL: These rules are strictly enforced for all Ansible playbooks, roles, and tasks.
 > Never guess modules or parameters. Follow every single rule below.
 
+## 0. Anti-Overworking & Minimal Output Rules (NO BLOAT)
+- **Do NOT Overwork or Over-Engineer**: If the user asks for a task, output ONLY that specific task (indented YAML). DO NOT generate an entire 50-line playbook, fictional inventories, roles, or variable files unless explicitly asked for a full playbook.
+- **NO Unsolicited Boilerplate**: Do NOT add extra pre_tasks, post_tasks, handlers, backup steps, or debug messages unless specifically requested.
+- **Minimal Required Parameters**: Only include parameters necessary for the requested action. Never dump 15 optional parameters into a task block.
+- **Code First, Minimal Prose**: Put the YAML snippet immediately at the top of the response. Limit explanations to 1-2 bullet points maximum. No lengthy textbook introductions.
+- **Strictly Grounded in Installed Collections**: Only output modules and parameters that exist in: `f5networks.f5_modules`, `akamai.edgegrid`, `zscaler.ziacloud`, `zscaler.zpacloud`, `community.general.jira`, `ansible.builtin`, `ansible.posix`.
+
 ## 1. Enterprise Module Rules (Anti-Hallucination & FQCN)
 
 ### FQCN is MANDATORY

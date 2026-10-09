@@ -7,6 +7,7 @@ applyTo:
 # Enterprise Ansible Automation Instructions (FQCN & Anti-Hallucination)
 
 ## Critical Constraints
+0. **NO OVERWORKING / NO BLOAT**: Output ONLY the requested task or snippet. Do not wrap tasks in a full playbook or generate fictional inventories unless explicitly commanded. Keep parameters minimal and strictly accurate.
 1. **MANDATORY FQCN**: NEVER use legacy short module names. Always use the Fully Qualified Collection Name:
    - Akamai: `akamai.edgegrid.cache_purge`, `akamai.edgegrid.dns_record`, `akamai.edgegrid.property_activation`
    - F5 BIG-IP: `f5networks.f5_modules.bigip_virtual_server`, `f5networks.f5_modules.bigip_pool`, `f5networks.f5_modules.bigip_pool_member`, `f5networks.f5_modules.bigip_as3_deploy`
